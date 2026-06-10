@@ -21,8 +21,10 @@ class LibraryMatcher(private val platforms: List<PlatformDef>) {
     private val aliasToPlatform: Map<String, PlatformDef> =
         platforms.flatMap { p -> p.folderAliases.map { it.lowercase() to p } }.toMap()
     private val extensionToPlatforms: Map<String, List<PlatformDef>> =
-        platforms.flatMap { p -> p.extensions.map { it.lowercase() to p } }
+        platforms.flatMap { p -> p.extensions.map { it.lowercase().trim() to p } }
             .groupBy({ it.first }, { it.second })
+    private val platformIdToExtensions: Map<String, Set<String>> =
+        platforms.associate { p -> p.id to p.extensions.map { it.lowercase().trim() }.toSet() }
 
     fun match(files: List<ScannedFile>): ScanResult {
         val games = mutableListOf<Game>()
@@ -37,7 +39,7 @@ class LibraryMatcher(private val platforms: List<PlatformDef>) {
                 ?.let { aliasToPlatform.getValue(it.lowercase().trim()) }
 
             when {
-                folderPlatform != null && ext in folderPlatform.extensions ->
+                folderPlatform != null && ext in platformIdToExtensions.getValue(folderPlatform.id) ->
                     games += Game(title, file.uri, folderPlatform.id)
                 folderPlatform != null ->
                     skipped += SkippedFile(

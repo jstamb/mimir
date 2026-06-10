@@ -52,4 +52,35 @@ class LibraryMatcherTest {
         assertTrue(result.games.isEmpty())
         assertTrue("Nintendo 64" in result.skipped.single().reason)
     }
+
+    @Test
+    fun `uppercase file extension matches case-insensitively`() {
+        val result = matcher.match(listOf(ScannedFile("n64/Mario Kart.Z64", "content://x")))
+        assertEquals("n64", result.games.single().platformId)
+    }
+
+    @Test
+    fun `matcher tolerates uppercase data in platform definitions`() {
+        val synthetic = LibraryMatcher(
+            listOf(PlatformDef("test", "Test", listOf("TestFolder"), listOf("CHD2"))),
+        )
+        val result = synthetic.match(listOf(file("testfolder/Game.chd2")))
+        assertEquals("test", result.games.single().platformId)
+    }
+
+    @Test
+    fun `ambiguous extension without folder hint is skipped and reason names both platforms`() {
+        val synthetic = LibraryMatcher(
+            listOf(
+                PlatformDef("alpha", "Alpha Console", listOf("alpha"), listOf("bin")),
+                PlatformDef("beta", "Beta Console", listOf("beta"), listOf("bin")),
+            ),
+        )
+        val result = synthetic.match(listOf(file("stuff/Game.bin")))
+        assertTrue(result.games.isEmpty())
+        val skipped = result.skipped.single()
+        assertEquals("stuff/Game.bin", skipped.relativePath)
+        assertTrue("Alpha Console" in skipped.reason)
+        assertTrue("Beta Console" in skipped.reason)
+    }
 }
