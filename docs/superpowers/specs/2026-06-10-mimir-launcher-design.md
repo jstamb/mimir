@@ -1,8 +1,8 @@
-# Bifrost — Open-Source Dual-Screen Launcher for the AYN Thor
+# Mimir — Open-Source Dual-Screen Launcher for the AYN Thor
 
 **Date:** 2026-06-10
 **Status:** Design approved (Jordan, 2026-06-10)
-**Working title:** Bifrost (the bridge between two realms — renameable)
+**Working title:** Mimir (Odin's wise counsel — name vetted clean against the launcher/emulation space 2026-06-10)
 **License:** GPLv3
 **Stack:** Kotlin + Jetpack Compose, Android multi-display (Presentation API)
 
@@ -25,7 +25,7 @@ Cocoon was built for the dev's own AYN Thor, is free (Ko-Fi-funded), shipped 12 
 - **Beacon, iiSU, Console Launcher, LaunchBox, Argon, RESET Collection:** all closed.
 - **Pegasus:** the only mature open frontend (GPLv3) — but C++/Qt/QML, no dual-screen support, pending Qt6 migration, and the worst per-system emulator UX on Android (hand-edited `am start` strings).
 - **Titanius Launcher:** MIT, Flutter, abandoned Jan 2024 — useful as a small readable reference for intent/SAF launching.
-- **Lemuroid:** GPLv3, Kotlin, very active — an all-in-one emulator, not a frontend, but the best open Kotlin reference for controller input, library scanning, and storage plumbing. GPLv3 code is copyable since Bifrost is GPLv3.
+- **Lemuroid:** GPLv3, Kotlin, very active — an all-in-one emulator, not a frontend, but the best open Kotlin reference for controller input, library scanning, and storage plumbing. GPLv3 code is copyable since Mimir is GPLv3.
 
 **Conclusion:** greenfield Kotlin + Compose, harvesting designs (and where licenses allow, code) rather than forking. No maintained open-source project occupies this slot as of June 2026.
 
@@ -60,7 +60,7 @@ A GPLv3, Kotlin + Jetpack Compose frontend with an **original modern-console-OS 
 
 It wins by inverting Cocoon's four structural weaknesses:
 
-| Cocoon weakness | Bifrost answer |
+| Cocoon weakness | Mimir answer |
 |---|---|
 | Closed source, abandonment fear (#5) | GPLv3, public repo, community PRs |
 | Whitelisted emulators, buried settings (#2) | Open Player model: auto-detect + any custom intent |
@@ -156,7 +156,7 @@ v1 themes are JSON **design-token packs**: palettes, typography scale, shapes, p
 
 ## 7. Risks
 
-- **The incumbent is good.** Cocoon is free, beloved, Thor-native, and fast (12 releases / 4 months). Its audio/haptic/mascot polish took a small team months. Bifrost's wedge is structural — open source and an open emulator model — things Cocoon's architecture and the dev's stated stance prevent them from matching.
+- **The incumbent is good.** Cocoon is free, beloved, Thor-native, and fast (12 releases / 4 months). Its audio/haptic/mascot polish took a small team months. Mimir's wedge is structural — open source and an open emulator model — things Cocoon's architecture and the dev's stated stance prevent them from matching.
 - **Scope.** Four differentiators in v1 is a multi-month solo build; the M1–M5 staging is the control. Each milestone is independently demoable.
 - **Hardware gap.** Thor arrives in weeks; emulator-simulated dual display de-risks but doesn't eliminate on-device surprises (input focus, refresh, emulator handoff edge cases).
 - **GPLv3 choice** forecloses a paid closed build later. Accepted deliberately: open source IS the differentiator.
