@@ -1,0 +1,11 @@
+[
+  {"id": "fake-emulator", "name": "Mimir Fake Emulator",
+   "packageName": "dev.mimir.fakeemulator",
+   "activityClass": "dev.mimir.fakeemulator.CatchActivity",
+   "action": "android.intent.action.VIEW",
+   "platformIds": ["nes", "snes", "n64", "gba", "nds", "gc", "psx"]},
+  {"id": "melonds", "name": "melonDS",
+   "packageName": "me.magnum.melonds",
+   "action": "android.intent.action.VIEW",
+   "platformIds": ["nds"]}
+]
