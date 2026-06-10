@@ -1,0 +1,16 @@
+[
+  {"id": "nes", "name": "Nintendo Entertainment System",
+   "folderAliases": ["nes", "famicom", "fc"], "extensions": ["nes", "fds", "unf"]},
+  {"id": "snes", "name": "Super Nintendo",
+   "folderAliases": ["snes", "sfc", "superfamicom", "supernintendo"], "extensions": ["sfc", "smc"]},
+  {"id": "n64", "name": "Nintendo 64",
+   "folderAliases": ["n64", "nintendo64", "nintendo 64"], "extensions": ["n64", "z64", "v64"]},
+  {"id": "gba", "name": "Game Boy Advance",
+   "folderAliases": ["gba", "gameboyadvance", "gameboy advance"], "extensions": ["gba"]},
+  {"id": "nds", "name": "Nintendo DS",
+   "folderAliases": ["nds", "ds", "nintendods", "nintendo ds"], "extensions": ["nds"]},
+  {"id": "gc", "name": "GameCube",
+   "folderAliases": ["gc", "ngc", "gamecube", "gcn"], "extensions": ["gcm", "rvz", "ciso"]},
+  {"id": "psx", "name": "PlayStation",
+   "folderAliases": ["psx", "ps1", "playstation"], "extensions": ["chd", "pbp", "cue"]}
+]
