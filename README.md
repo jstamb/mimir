@@ -3,11 +3,11 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M3 — boxart.** The library grid shows game boxart with zero setup,
-resolved from the community libretro-thumbnails collection (one directory
-listing per platform, matched locally; images load lazily and cache on disk).
-ScreenScraper video snaps, SteamGridDB hero art, and ES-DE media import are the
-next scraping tiers. Dual-screen shell lands when real Thor hardware does.
+**Status: M2b — emulator management.** Per-system default emulators (front and
+center in Settings → Emulators), per-game overrides via long-press, and
+installed-aware resolution over a registry of real emulators — any emulator the
+registry doesn't know can still be added (custom player definitions land next).
+Boxart, persistent library, fast scanning, and scan diagnostics already in.
 
 ## Why another launcher?
 

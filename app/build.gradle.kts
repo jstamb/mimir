@@ -9,8 +9,8 @@ android {
         applicationId = "dev.mimir.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0-m3"
+        versionCode = 4
+        versionName = "0.4.0-m2b"
     }
     buildFeatures { compose = true }
 }
