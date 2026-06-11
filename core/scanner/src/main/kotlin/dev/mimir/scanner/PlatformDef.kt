@@ -9,6 +9,8 @@ data class PlatformDef(
     val name: String,
     val folderAliases: List<String>,
     val extensions: List<String>,
+    /** Directory name on thumbnails.libretro.com, e.g. "Nintendo - Nintendo 64". */
+    val libretroName: String = "",
 )
 
 object PlatformDefs {

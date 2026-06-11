@@ -6,6 +6,7 @@
             <data android:scheme="content" android:mimeType="*/*" />
         </intent>
     </queries>
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Mimir"
         android:theme="@style/Theme.Mimir">

@@ -46,6 +46,15 @@ class PlatformDefsTest {
     }
 
     @Test
+    fun `every platform has a libretro thumbnails system name`() {
+        val platforms = PlatformDefs.load()
+        for (p in platforms) {
+            assertTrue(p.libretroName.isNotBlank(), "platform ${p.id} missing libretroName")
+            assertTrue(" - " in p.libretroName, "libretroName for ${p.id} should be 'Maker - System' form: ${p.libretroName}")
+        }
+    }
+
+    @Test
     fun `no folder alias is claimed by two different platforms`() {
         val platforms = PlatformDefs.load()
         val claims = platforms.flatMap { p -> p.folderAliases.map { it to p.id } }
