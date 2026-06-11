@@ -9,6 +9,10 @@ class GameRepository(private val dao: LibraryDao) {
     val media: Flow<List<MediaEntity>> = dao.media()
     val platformPrefs: Flow<List<PlatformPrefEntity>> = dao.platformPrefs()
     val gamePrefs: Flow<List<GamePrefEntity>> = dao.gamePrefs()
+    val customPlayers: Flow<List<CustomPlayerEntity>> = dao.customPlayers()
+
+    suspend fun saveCustomPlayer(player: CustomPlayerEntity) = dao.upsertCustomPlayer(player)
+    suspend fun deleteCustomPlayer(id: String) = dao.deleteCustomPlayer(id)
 
     suspend fun setPlatformDefault(platformId: String, playerId: String) =
         dao.setPlatformPref(PlatformPrefEntity(platformId, playerId))

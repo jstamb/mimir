@@ -16,6 +16,7 @@ android {
 }
 dependencies {
     api(project(":core:scanner"))
+    api(project(":core:launcher"))
     api(libs.room.runtime)
     ksp(libs.room.compiler)
     implementation(libs.coroutines.core)

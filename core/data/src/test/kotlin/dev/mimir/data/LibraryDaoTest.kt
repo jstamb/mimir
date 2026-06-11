@@ -94,4 +94,22 @@ class LibraryDaoTest {
         dao.deleteGames(listOf("uri-g"))
         assertEquals(emptyList<GamePrefEntity>(), dao.gamePrefs().first())
     }
+
+    @Test
+    fun `custom players round trip and delete`() = runBlocking {
+        val dao = db().libraryDao()
+        val entity = CustomPlayerEntity(
+            id = "custom-com.example.emu",
+            name = "My Emu",
+            packageName = "com.example.emu",
+            activityClass = null,
+            action = "android.intent.action.VIEW",
+            platformIds = "n64,gc",
+        )
+        dao.upsertCustomPlayer(entity)
+        assertEquals(listOf(entity), dao.customPlayers().first())
+        assertEquals(listOf("n64", "gc"), dao.customPlayers().first().single().toPlayerDef().platformIds)
+        dao.deleteCustomPlayer("custom-com.example.emu")
+        assertEquals(emptyList<CustomPlayerEntity>(), dao.customPlayers().first())
+    }
 }

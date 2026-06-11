@@ -55,6 +55,15 @@ interface LibraryDao {
     @Query("DELETE FROM game_prefs WHERE gameUri = :gameUri")
     suspend fun clearGamePref(gameUri: String)
 
+    @Query("SELECT * FROM custom_players")
+    fun customPlayers(): Flow<List<CustomPlayerEntity>>
+
+    @Upsert
+    suspend fun upsertCustomPlayer(player: CustomPlayerEntity)
+
+    @Query("DELETE FROM custom_players WHERE id = :id")
+    suspend fun deleteCustomPlayer(id: String)
+
     @Transaction
     suspend fun applyChanges(
         toUpsert: List<GameEntity>,

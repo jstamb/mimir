@@ -12,8 +12,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         MediaEntity::class,
         PlatformPrefEntity::class,
         GamePrefEntity::class,
+        CustomPlayerEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class MimirDatabase : RoomDatabase() {
@@ -30,6 +31,17 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
             "CREATE TABLE IF NOT EXISTS `game_prefs` " +
                 "(`gameUri` TEXT NOT NULL, `playerId` TEXT NOT NULL, PRIMARY KEY(`gameUri`), " +
                 "FOREIGN KEY(`gameUri`) REFERENCES `games`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+        )
+    }
+}
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `custom_players` " +
+                "(`id` TEXT NOT NULL, `name` TEXT NOT NULL, `packageName` TEXT NOT NULL, " +
+                "`activityClass` TEXT, `action` TEXT NOT NULL, `platformIds` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`))"
         )
     }
 }

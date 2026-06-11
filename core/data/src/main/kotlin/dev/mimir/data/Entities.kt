@@ -56,3 +56,22 @@ data class GamePrefEntity(
     @PrimaryKey val gameUri: String,
     val playerId: String,
 )
+
+@Entity(tableName = "custom_players")
+data class CustomPlayerEntity(
+    @PrimaryKey val id: String,            // "custom-" + packageName
+    val name: String,
+    val packageName: String,
+    val activityClass: String?,
+    val action: String,
+    val platformIds: String,               // comma-joined platform ids
+)
+
+fun CustomPlayerEntity.toPlayerDef() = dev.mimir.launcher.PlayerDef(
+    id = id,
+    name = name,
+    packageName = packageName,
+    activityClass = activityClass,
+    action = action,
+    platformIds = platformIds.split(',').filter { it.isNotBlank() },
+)

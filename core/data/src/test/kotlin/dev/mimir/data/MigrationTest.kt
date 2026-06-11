@@ -32,4 +32,17 @@ class MigrationTest {
         db.query("SELECT COUNT(*) FROM platform_prefs").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
         db.query("SELECT COUNT(*) FROM game_prefs").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
     }
+
+    @Test
+    fun `migrate 3 to 4 preserves prefs and creates custom_players`() {
+        helper.createDatabase("migration-test-4", 3).apply {
+            execSQL("INSERT INTO platform_prefs (platformId, playerId) VALUES ('nds', 'melonds')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("migration-test-4", 4, true, MIGRATION_3_4)
+        db.query("SELECT playerId FROM platform_prefs WHERE platformId = 'nds'").use { c ->
+            c.moveToFirst(); assertEquals("melonds", c.getString(0))
+        }
+        db.query("SELECT COUNT(*) FROM custom_players").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+    }
 }
