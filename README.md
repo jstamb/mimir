@@ -3,11 +3,10 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M2c — open emulator model complete.** Register ANY installed app as
-an emulator for any system (Settings → Emulators → Add custom emulator) — the
-no-whitelist escape hatch. Per-system defaults, per-game overrides, installed-
-aware resolution, boxart, persistent fast-scanning library all in. Next: UI
-polish + theming.
+**Status: M4a — ES-DE media import.** One tap imports covers from an existing
+ES-DE `downloaded_media` folder (videos are detected and counted; playback
+lands with theming). Open emulator model, boxart scraping, persistent library
+all in. Next: UI polish + theme system.
 
 ## Why another launcher?
 
