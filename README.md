@@ -3,12 +3,11 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M2a — persistent library + fast scanning.** Bulk SAF scanning (one
-query per directory), Room-backed library with instant cold-start, incremental
-rescans (no duplicates, no losses), a full scan-report screen for skipped
-files, and graceful error states for lost folder access. Next (M2b): emulator
-auto-detection, per-platform/per-game emulator choice, and custom player
-definitions.
+**Status: M3 — boxart.** The library grid shows game boxart with zero setup,
+resolved from the community libretro-thumbnails collection (one directory
+listing per platform, matched locally; images load lazily and cache on disk).
+ScreenScraper video snaps, SteamGridDB hero art, and ES-DE media import are the
+next scraping tiers. Dual-screen shell lands when real Thor hardware does.
 
 ## Why another launcher?
 
@@ -36,6 +35,7 @@ committed toolchain config — any JDK able to launch Gradle works.
 | `:app` | Android shell — Compose UI, SAF scanning, intent dispatch |
 | `:core:scanner` | Pure JVM — platform registry + file→platform matcher |
 | `:core:launcher` | Pure JVM — player (emulator) registry + intent templates |
+| `:core:scraper` | Pure JVM — libretro-thumbnails name rules + art matching |
 | `:core:data` | Android library — Room persistence, diff-sync repository |
 | `:tools:fake-emulator` | Test fixture APK that displays any VIEW intent it receives |
 
