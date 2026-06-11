@@ -1,6 +1,12 @@
 [versions]
 agp = "9.2.0"
-kotlin = "2.4.0"
+# kotlin downgraded 2.4.0 -> 2.3.x: KSP (required by Room) has no Kotlin 2.4 release yet
+# (github.com/google/ksp/issues/2965). Revert when KSP ships 2.4 support.
+kotlin = "2.3.10"
+ksp = "2.3.9"
+room = "2.8.4"
+robolectric = "4.16"
+androidxTestCore = "1.7.0"
 composeBom = "2026.05.00"
 activityCompose = "1.11.0"
 lifecycle = "2.10.0"
@@ -20,9 +26,16 @@ documentfile = { group = "androidx.documentfile", name = "documentfile", version
 serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serializationJson" }
 coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "androidxTestCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
