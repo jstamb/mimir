@@ -31,6 +31,15 @@ interface LibraryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSkipped(items: List<SkippedFileEntity>)
 
+    @Query("SELECT * FROM media")
+    fun media(): Flow<List<MediaEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMedia(items: List<MediaEntity>)
+
+    @Query("SELECT g.* FROM games g LEFT JOIN media m ON g.uri = m.gameUri WHERE m.gameUri IS NULL")
+    suspend fun gamesWithoutArt(): List<GameEntity>
+
     @Transaction
     suspend fun applyChanges(
         toUpsert: List<GameEntity>,

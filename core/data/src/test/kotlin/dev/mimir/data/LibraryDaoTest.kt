@@ -63,4 +63,16 @@ class LibraryDaoTest {
         assertEquals(0, dao.gamesOnce().size)
         assertEquals(0, dao.skippedFiles().first().size)
     }
+
+    @Test
+    fun `media rows save and cascade-delete with their game`() = runBlocking {
+        val dao = db().libraryDao()
+        dao.upsertGames(listOf(GameEntity("uri-m", "Mario Kart 64", "n64", "n64/Mario Kart 64.z64", 1)))
+        dao.insertMedia(listOf(MediaEntity("uri-m", "https://example.test/mk64.png")))
+        assertEquals("https://example.test/mk64.png", dao.media().first().single().boxartUrl)
+        assertEquals(emptyList(), dao.gamesWithoutArt())
+
+        dao.deleteGames(listOf("uri-m"))
+        assertEquals(emptyList<MediaEntity>(), dao.media().first())
+    }
 }

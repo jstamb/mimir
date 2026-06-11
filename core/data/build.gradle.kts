@@ -20,3 +20,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
 }
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
