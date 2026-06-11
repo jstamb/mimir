@@ -22,7 +22,8 @@ definitions.
 
 ## Build
 
-JDK 17 + Android SDK 36 required.
+Android SDK 36 required. The Gradle daemon JVM (21) auto-provisions via the
+committed toolchain config — any JDK able to launch Gradle works.
 
     ./gradlew :app:assembleDebug        # the launcher
     ./gradlew test                      # unit tests (pure-JVM core modules)
