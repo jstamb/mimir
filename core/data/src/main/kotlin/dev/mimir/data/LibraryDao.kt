@@ -40,6 +40,21 @@ interface LibraryDao {
     @Query("SELECT g.* FROM games g LEFT JOIN media m ON g.uri = m.gameUri WHERE m.gameUri IS NULL")
     suspend fun gamesWithoutArt(): List<GameEntity>
 
+    @Query("SELECT * FROM platform_prefs")
+    fun platformPrefs(): Flow<List<PlatformPrefEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun setPlatformPref(pref: PlatformPrefEntity)
+
+    @Query("SELECT * FROM game_prefs")
+    fun gamePrefs(): Flow<List<GamePrefEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun setGamePref(pref: GamePrefEntity)
+
+    @Query("DELETE FROM game_prefs WHERE gameUri = :gameUri")
+    suspend fun clearGamePref(gameUri: String)
+
     @Transaction
     suspend fun applyChanges(
         toUpsert: List<GameEntity>,

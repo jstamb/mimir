@@ -2,12 +2,34 @@ package dev.mimir.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [GameEntity::class, SkippedFileEntity::class, MediaEntity::class],
-    version = 2,
+    entities = [
+        GameEntity::class,
+        SkippedFileEntity::class,
+        MediaEntity::class,
+        PlatformPrefEntity::class,
+        GamePrefEntity::class,
+    ],
+    version = 3,
     exportSchema = true,
 )
 abstract class MimirDatabase : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
+}
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `platform_prefs` " +
+                "(`platformId` TEXT NOT NULL, `playerId` TEXT NOT NULL, PRIMARY KEY(`platformId`))"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `game_prefs` " +
+                "(`gameUri` TEXT NOT NULL, `playerId` TEXT NOT NULL, PRIMARY KEY(`gameUri`), " +
+                "FOREIGN KEY(`gameUri`) REFERENCES `games`(`uri`) ON UPDATE NO ACTION ON DELETE CASCADE)"
+        )
+    }
 }

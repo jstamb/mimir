@@ -34,3 +34,25 @@ data class MediaEntity(
     @PrimaryKey val gameUri: String,
     val boxartUrl: String,
 )
+
+@Entity(tableName = "platform_prefs")
+data class PlatformPrefEntity(
+    @PrimaryKey val platformId: String,
+    val playerId: String,
+)
+
+@Entity(
+    tableName = "game_prefs",
+    foreignKeys = [
+        ForeignKey(
+            entity = GameEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["gameUri"],
+            onDelete = ForeignKey.CASCADE,
+        )
+    ],
+)
+data class GamePrefEntity(
+    @PrimaryKey val gameUri: String,
+    val playerId: String,
+)

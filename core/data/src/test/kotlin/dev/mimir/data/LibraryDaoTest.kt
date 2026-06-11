@@ -75,4 +75,23 @@ class LibraryDaoTest {
         dao.deleteGames(listOf("uri-m"))
         assertEquals(emptyList<MediaEntity>(), dao.media().first())
     }
+
+    @Test
+    fun `prefs round trip and game override cascade-deletes with its game`() = runBlocking {
+        val dao = db().libraryDao()
+        dao.setPlatformPref(PlatformPrefEntity("nds", "melonds"))
+        dao.setPlatformPref(PlatformPrefEntity("nds", "drastic")) // replace
+        assertEquals(listOf(PlatformPrefEntity("nds", "drastic")), dao.platformPrefs().first())
+
+        dao.upsertGames(listOf(GameEntity("uri-g", "Game", "nds", "nds/Game.nds", 1)))
+        dao.setGamePref(GamePrefEntity("uri-g", "melonds"))
+        assertEquals(listOf(GamePrefEntity("uri-g", "melonds")), dao.gamePrefs().first())
+
+        dao.clearGamePref("uri-g")
+        assertEquals(emptyList<GamePrefEntity>(), dao.gamePrefs().first())
+
+        dao.setGamePref(GamePrefEntity("uri-g", "melonds"))
+        dao.deleteGames(listOf("uri-g"))
+        assertEquals(emptyList<GamePrefEntity>(), dao.gamePrefs().first())
+    }
 }

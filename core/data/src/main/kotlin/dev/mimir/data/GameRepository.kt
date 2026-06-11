@@ -7,6 +7,16 @@ class GameRepository(private val dao: LibraryDao) {
     val games: Flow<List<GameEntity>> = dao.games()
     val skipped: Flow<List<SkippedFileEntity>> = dao.skippedFiles()
     val media: Flow<List<MediaEntity>> = dao.media()
+    val platformPrefs: Flow<List<PlatformPrefEntity>> = dao.platformPrefs()
+    val gamePrefs: Flow<List<GamePrefEntity>> = dao.gamePrefs()
+
+    suspend fun setPlatformDefault(platformId: String, playerId: String) =
+        dao.setPlatformPref(PlatformPrefEntity(platformId, playerId))
+
+    suspend fun setGameOverride(gameUri: String, playerId: String) =
+        dao.setGamePref(GamePrefEntity(gameUri, playerId))
+
+    suspend fun clearGameOverride(gameUri: String) = dao.clearGamePref(gameUri)
 
     suspend fun gamesWithoutArt(): List<GameEntity> = dao.gamesWithoutArt()
 

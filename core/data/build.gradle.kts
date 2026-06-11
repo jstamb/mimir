@@ -7,6 +7,12 @@ android {
     compileSdk = 36
     defaultConfig { minSdk = 29 }
     testOptions { unitTests.isIncludeAndroidResources = true }
+    // MigrationTestHelper loads exported schema JSONs from test assets.
+    sourceSets {
+        getByName("test") {
+            assets.srcDir("$projectDir/schemas")
+        }
+    }
 }
 dependencies {
     api(project(":core:scanner"))
@@ -19,6 +25,8 @@ dependencies {
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.room.testing)
+    testImplementation(libs.androidx.test.runner)
 }
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
