@@ -24,6 +24,10 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(project(":core:data"))
+    implementation(project(":core:scraper"))
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.okhttp)
     implementation(libs.coroutines.android)
     testImplementation(libs.junit)
     // kotlin("test") alone resolves the frameworkless variant under AGP's built-in Kotlin

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import dev.mimir.data.GameEntity
 import dev.mimir.data.GameRepository
+import dev.mimir.data.MediaEntity
 import dev.mimir.data.MimirDatabase
 import dev.mimir.data.SkippedFileEntity
 import dev.mimir.launcher.PlayerDefs
@@ -32,8 +33,10 @@ sealed interface UiState {
     data class Error(val message: String) : UiState
     data class Library(
         val gamesByPlatform: Map<String, List<GameEntity>>, // key = platform display name
+        val art: Map<String, String>,                       // game uri -> boxart url
         val skippedCount: Int,
         val scanning: Boolean,
+        val scraping: ArtScraper.Progress?,
     ) : UiState
 }
 
@@ -43,8 +46,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val platformNames = platforms.associate { it.id to it.name }
     private val matcher = LibraryMatcher(platforms)
     private val players = PlayerDefs.load()
-    private val db = Room.databaseBuilder(app, MimirDatabase::class.java, "mimir.db").build()
+    private val db = Room.databaseBuilder(app, MimirDatabase::class.java, "mimir.db")
+        .fallbackToDestructiveMigration(dropAllTables = true)
+        .build()
     private val repo = GameRepository(db.libraryDao())
+    private val artScraper = ArtScraper(repo, platforms)
+    private val scrapeProgress = MutableStateFlow<ArtScraper.Progress?>(null)
 
     private val treeUri = MutableStateFlow(prefs.getString("treeUri", null)?.let(Uri::parse))
     private val scanning = MutableStateFlow(false)
@@ -55,17 +62,29 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val skipped: StateFlow<List<SkippedFileEntity>> =
         repo.skipped.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    private data class LibraryData(val games: List<GameEntity>, val art: Map<String, String>)
+    private data class Status(val scanning: Boolean, val error: String?, val scraping: ArtScraper.Progress?)
+
+    private val libraryData = combine(repo.games, repo.media) { games, media ->
+        LibraryData(games, media.associate { it.gameUri to it.boxartUrl })
+    }
+    private val status = combine(scanning, error, scrapeProgress) { scan, err, scrape ->
+        Status(scan, err, scrape)
+    }
+
     val state: StateFlow<UiState> =
-        combine(treeUri, repo.games, skipped, scanning, error) { uri, games, skip, scan, err ->
+        combine(treeUri, libraryData, skipped, status) { uri, lib, skip, st ->
             when {
-                err != null -> UiState.Error(err)
+                st.error != null -> UiState.Error(st.error)
                 uri == null -> UiState.NeedsFolder
                 else -> UiState.Library(
-                    gamesByPlatform = games
+                    gamesByPlatform = lib.games
                         .groupBy { platformNames[it.platformId] ?: it.platformId }
                         .toSortedMap(),
+                    art = lib.art,
                     skippedCount = skip.size,
-                    scanning = scan,
+                    scanning = st.scanning,
+                    scraping = st.scraping,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.NeedsFolder)
@@ -90,12 +109,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     matcher.match(WalkEngine.walk(source, source.rootUri))
                 }
                 repo.applyScan(result)
+                fetchArtwork()
             } catch (e: TreeAccessException) {
                 error.value = "Can't read the ROM folder (${e.message}). Pick it again or check the storage."
             } catch (e: SecurityException) {
                 error.value = "Access to the ROM folder was revoked. Pick it again."
             } finally {
                 scanning.value = false
+            }
+        }
+    }
+
+    fun fetchArtwork() {
+        if (scrapeProgress.value != null) return // already running
+        viewModelScope.launch {
+            try {
+                artScraper.scrapeMissing { scrapeProgress.value = it }
+            } finally {
+                scrapeProgress.value = null
             }
         }
     }

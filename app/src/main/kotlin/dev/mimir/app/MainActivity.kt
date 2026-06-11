@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import dev.mimir.data.GameEntity
 import dev.mimir.data.SkippedFileEntity
 
@@ -86,6 +92,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                         onRescan = viewModel::rescan,
                         onPickFolder = onPickFolder,
                         onShowReport = { showReport = true },
+                        onFetchArtwork = viewModel::fetchArtwork,
                     )
             }
         }
@@ -108,6 +115,7 @@ fun LibraryGrid(
     onRescan: () -> Unit,
     onPickFolder: () -> Unit,
     onShowReport: () -> Unit,
+    onFetchArtwork: () -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 140.dp),
@@ -123,6 +131,9 @@ fun LibraryGrid(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
+                    TextButton(onClick = onFetchArtwork, enabled = library.scraping == null) {
+                        Text(if (library.scraping == null) "Fetch artwork" else "Artwork ${library.scraping.done}/${library.scraping.total}")
+                    }
                     TextButton(onClick = onRescan, enabled = !library.scanning) { Text("Rescan") }
                     TextButton(onClick = onPickFolder) { Text("Change folder") }
                 }
@@ -133,20 +144,60 @@ fun LibraryGrid(
         }
         library.gamesByPlatform.forEach { (platformName, games) ->
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(platformName, style = MaterialTheme.typography.titleLarge)
+                Column(Modifier.padding(top = 8.dp)) {
+                    Text(platformName, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "${games.size} ${if (games.size == 1) "game" else "games"}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             items(games, key = { it.uri }) { game ->
-                Card(Modifier.height(100.dp).clickable { onGameClick(game) }) {
-                    Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
-                        Text(game.title, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
+                GameCard(game, artUrl = library.art[game.uri], onClick = { onGameClick(game) })
             }
         }
         if (library.skippedCount > 0) {
             item(span = { GridItemSpan(maxLineSpan) }) {
                 TextButton(onClick = onShowReport) {
                     Text("${library.skippedCount} files skipped — view scan report")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GameCard(game: GameEntity, artUrl: String?, onClick: () -> Unit) {
+    Card(Modifier.height(180.dp).clickable(onClick = onClick)) {
+        Box(Modifier.fillMaxSize()) {
+            if (artUrl != null) {
+                AsyncImage(
+                    model = artUrl,
+                    contentDescription = game.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                Box(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(
+                            Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))
+                        )
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        game.title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else {
+                Box(Modifier.fillMaxSize().padding(12.dp), contentAlignment = Alignment.Center) {
+                    Text(game.title, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
