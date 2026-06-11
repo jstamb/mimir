@@ -9,11 +9,10 @@ class GameRepository(private val dao: LibraryDao) {
 
     suspend fun applyScan(result: ScanResult) {
         val change = DiffEngine.diff(dao.gamesOnce(), result.games)
-        if (change.toUpsert.isNotEmpty()) dao.upsertGames(change.toUpsert)
-        if (change.toDeleteUris.isNotEmpty()) dao.deleteGames(change.toDeleteUris)
-        dao.clearSkipped()
-        if (result.skipped.isNotEmpty()) {
-            dao.insertSkipped(result.skipped.map { SkippedFileEntity(it.relativePath, it.reason) })
-        }
+        dao.applyChanges(
+            toUpsert = change.toUpsert,
+            toDeleteUris = change.toDeleteUris,
+            skipped = result.skipped.map { SkippedFileEntity(it.relativePath, it.reason) },
+        )
     }
 }

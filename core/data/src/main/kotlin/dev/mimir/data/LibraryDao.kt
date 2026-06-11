@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -29,4 +30,16 @@ interface LibraryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSkipped(items: List<SkippedFileEntity>)
+
+    @Transaction
+    suspend fun applyChanges(
+        toUpsert: List<GameEntity>,
+        toDeleteUris: List<String>,
+        skipped: List<SkippedFileEntity>,
+    ) {
+        if (toUpsert.isNotEmpty()) upsertGames(toUpsert)
+        if (toDeleteUris.isNotEmpty()) deleteGames(toDeleteUris)
+        clearSkipped()
+        if (skipped.isNotEmpty()) insertSkipped(skipped)
+    }
 }
