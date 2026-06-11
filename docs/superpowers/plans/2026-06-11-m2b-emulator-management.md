@@ -473,8 +473,8 @@ Add after `private val players = PlayerDefs.load()`:
 
 Replace `launchGame` with resolver-based resolution + a clearer not-installed message:
 ```kotlin
-    fun launchGame(game: GameEntity) {
-        val player = resolver(prefsState.value).resolve(game.uri, game.platformId)
+    fun launchGame(game: GameEntity, forced: PlayerDef? = null) {
+        val player = forced ?: resolver(prefsState.value).resolve(game.uri, game.platformId)
         if (player == null) {
             _message.value = "No emulator registered for ${platformNames[game.platformId] ?: game.platformId}"
             return
@@ -648,7 +648,7 @@ In the `is UiState.Library ->` branch, route between report/settings/grid:
                     )
                     else -> LibraryGrid(
                         s,
-                        onGameClick = viewModel::launchGame,
+                        onGameClick = { viewModel.launchGame(it) },
                         onGameLongClick = { sheetGame = it },
                         onRescan = viewModel::rescan,
                         onPickFolder = onPickFolder,
@@ -670,7 +670,7 @@ After the `when` block (still inside the Scaffold padding Box), add the bottom s
                     onPick = { player ->
                         viewModel.setGameOverride(game, player.id)
                         sheetGame = null
-                        viewModel.launchGame(game)
+                        viewModel.launchGame(game, forced = player)
                     },
                     onClearOverride = { viewModel.clearGameOverride(game); sheetGame = null },
                     onDismiss = { sheetGame = null },

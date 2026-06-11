@@ -92,17 +92,20 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                 }
                 is UiState.Library -> when {
                     showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
-                    showSettings -> EmulatorSettingsScreen(
-                        platforms = viewModel.platformsForSettings(),
-                        claimants = viewModel.claimantsByPlatform(),
-                        prefs = prefs,
-                        isInstalled = viewModel::isPlayerInstalled,
-                        onSetDefault = viewModel::setPlatformDefault,
-                        onBack = { showSettings = false },
-                    )
+                    showSettings -> {
+                        val installed = remember { viewModel.installedSnapshot() }
+                        EmulatorSettingsScreen(
+                            platforms = viewModel.platformsForSettings(),
+                            claimants = viewModel.claimantsByPlatform(),
+                            prefs = prefs,
+                            isInstalled = { it.packageName in installed },
+                            onSetDefault = viewModel::setPlatformDefault,
+                            onBack = { showSettings = false },
+                        )
+                    }
                     else -> LibraryGrid(
                         s,
-                        onGameClick = viewModel::launchGame,
+                        onGameClick = { viewModel.launchGame(it) },
                         onGameLongClick = { sheetGame = it },
                         onRescan = viewModel::rescan,
                         onPickFolder = onPickFolder,
@@ -113,15 +116,16 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                 }
             }
             sheetGame?.let { game ->
+                val installed = remember(game) { viewModel.installedSnapshot() }
                 PlayWithSheet(
                     game = game,
                     claimants = viewModel.claimantsByPlatform()[game.platformId].orEmpty(),
                     overrideId = prefs.gameOverrides[game.uri],
-                    isInstalled = viewModel::isPlayerInstalled,
+                    isInstalled = { it.packageName in installed },
                     onPick = { player ->
                         viewModel.setGameOverride(game, player.id)
                         sheetGame = null
-                        viewModel.launchGame(game)
+                        viewModel.launchGame(game, forced = player)
                     },
                     onClearOverride = { viewModel.clearGameOverride(game); sheetGame = null },
                     onDismiss = { sheetGame = null },

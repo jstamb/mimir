@@ -3,7 +3,7 @@ package dev.mimir.scraper
 /**
  * Matches a scanned game title against a platform's thumbnail listing.
  * Tiers: exact normalized match, then startsWith, then contains.
- * Within a tier, files containing "(USA)" win, then shortest name.
+ * Within a tier: non-demo releases first (Demo/Kiosk/Beta/Proto/Sample penalized), then files containing "(USA)", then shortest name.
  */
 class ArtMatcher(listing: List<String>) {
     private data class Candidate(val fileName: String, val normalized: String)

@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,6 +78,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun isPlayerInstalled(player: PlayerDef): Boolean =
         player.packageName in installedPackages()
+
+    /** One snapshot per screen entry; avoids per-row PackageManager queries during recomposition. */
+    fun installedSnapshot(): Set<String> = installedPackages()
 
     fun setPlatformDefault(platformId: String, playerId: String) {
         viewModelScope.launch { repo.setPlatformDefault(platformId, playerId) }
@@ -175,8 +177,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun launchGame(game: GameEntity) {
-        val player = resolver(prefsState.value).resolve(game.uri, game.platformId)
+    fun launchGame(game: GameEntity, forced: PlayerDef? = null) {
+        val player = forced ?: resolver(prefsState.value).resolve(game.uri, game.platformId)
         if (player == null) {
             _message.value = "No emulator registered for ${platformNames[game.platformId] ?: game.platformId}"
             return
