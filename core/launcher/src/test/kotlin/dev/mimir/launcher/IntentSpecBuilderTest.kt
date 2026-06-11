@@ -45,4 +45,18 @@ class IntentSpecBuilderTest {
         val player = defaultPlayerFor(players, platformId = "nds")
         assertTrue(player != null && "nds" in player.platformIds)
     }
+
+    @Test
+    fun `fake emulator is the LAST registry entry so real emulators win installed-order`() {
+        assertEquals("fake-emulator", PlayerDefs.load().last().id)
+    }
+
+    @Test
+    fun `registry has a real emulator for every platform the fake claims`() {
+        val players = PlayerDefs.load()
+        val fakePlatforms = players.first { it.id == "fake-emulator" }.platformIds
+        val realClaims = players.filter { it.id != "fake-emulator" }.flatMap { it.platformIds }.toSet()
+        val uncovered = fakePlatforms.filterNot { it in realClaims }
+        assertTrue(uncovered.isEmpty(), "platforms with no real emulator in registry: $uncovered")
+    }
 }

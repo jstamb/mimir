@@ -1,11 +1,21 @@
 [
+  {"id": "melonds", "name": "melonDS", "packageName": "me.magnum.melonds",
+   "action": "android.intent.action.VIEW", "platformIds": ["nds"]},
+  {"id": "mupen64-fz", "name": "Mupen64Plus FZ", "packageName": "org.mupen64plusae.v3.fzurita",
+   "action": "android.intent.action.VIEW", "platformIds": ["n64"]},
+  {"id": "dolphin", "name": "Dolphin", "packageName": "org.dolphinemu.dolphinemu",
+   "action": "android.intent.action.VIEW", "platformIds": ["gc"]},
+  {"id": "duckstation", "name": "DuckStation", "packageName": "com.github.stenzek.duckstation",
+   "action": "android.intent.action.VIEW", "platformIds": ["psx"]},
+  {"id": "snes9x-ex", "name": "Snes9x EX+", "packageName": "com.explusalpha.Snes9xPlus",
+   "action": "android.intent.action.VIEW", "platformIds": ["snes"]},
+  {"id": "nes-emu", "name": "NES.emu", "packageName": "com.explusalpha.NesEmu",
+   "action": "android.intent.action.VIEW", "platformIds": ["nes"]},
+  {"id": "gba-emu", "name": "GBA.emu", "packageName": "com.explusalpha.GbaEmu",
+   "action": "android.intent.action.VIEW", "platformIds": ["gba"]},
   {"id": "fake-emulator", "name": "Mimir Fake Emulator",
    "packageName": "dev.mimir.fakeemulator",
    "activityClass": "dev.mimir.fakeemulator.CatchActivity",
    "action": "android.intent.action.VIEW",
-   "platformIds": ["nes", "snes", "n64", "gba", "nds", "gc", "psx"]},
-  {"id": "melonds", "name": "melonDS",
-   "packageName": "me.magnum.melonds",
-   "action": "android.intent.action.VIEW",
-   "platformIds": ["nds"]}
+   "platformIds": ["nes", "snes", "n64", "gba", "nds", "gc", "psx"]}
 ]
