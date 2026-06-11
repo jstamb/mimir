@@ -3,11 +3,11 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M2b — emulator management.** Per-system default emulators (front and
-center in Settings → Emulators), per-game overrides via long-press, and
-installed-aware resolution over a registry of real emulators — any emulator the
-registry doesn't know can still be added (custom player definitions land next).
-Boxart, persistent library, fast scanning, and scan diagnostics already in.
+**Status: M2c — open emulator model complete.** Register ANY installed app as
+an emulator for any system (Settings → Emulators → Add custom emulator) — the
+no-whitelist escape hatch. Per-system defaults, per-game overrides, installed-
+aware resolution, boxart, persistent fast-scanning library all in. Next: UI
+polish + theming.
 
 ## Why another launcher?
 
