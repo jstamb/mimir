@@ -6,17 +6,20 @@ import android.net.Uri
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import dev.mimir.data.CustomPlayerEntity
 import dev.mimir.data.GameEntity
 import dev.mimir.data.GamePrefEntity
 import dev.mimir.data.GameRepository
 import dev.mimir.data.MediaEntity
 import dev.mimir.data.PlatformPrefEntity
 import dev.mimir.data.SkippedFileEntity
+import dev.mimir.data.toPlayerDef
 import dev.mimir.launcher.PlayerDef
 import dev.mimir.launcher.PlayerDefs
 import dev.mimir.launcher.PlayerPrefs
 import dev.mimir.launcher.PlayerResolver
 import dev.mimir.launcher.buildIntentSpec
+import dev.mimir.launcher.mergePlayers
 import dev.mimir.scanner.LibraryMatcher
 import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
@@ -26,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,7 +52,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val platforms = PlatformDefs.load()
     private val platformNames = platforms.associate { it.id to it.name }
     private val matcher = LibraryMatcher(platforms)
-    private val players = PlayerDefs.load()
+    private val bundledPlayers = PlayerDefs.load()
 
     private fun installedPackages(): Set<String> =
         getApplication<Application>().packageManager.getInstalledPackages(0)
@@ -56,6 +60,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val db = (app as MimirApp).db
     private val repo = GameRepository(db.libraryDao())
+
+    val playersState: StateFlow<List<PlayerDef>> =
+        repo.customPlayers.map { custom -> mergePlayers(bundledPlayers, custom.map { it.toPlayerDef() }) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, bundledPlayers)
 
     private val playerPrefs = combine(repo.platformPrefs, repo.gamePrefs) { platform, game ->
         PlayerPrefs(
@@ -65,14 +73,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Snapshot resolver for one-shot decisions (launch, settings render). */
-    private fun resolver(prefs: PlayerPrefs) = PlayerResolver(players, installedPackages(), prefs)
+    private fun resolver(prefs: PlayerPrefs) = PlayerResolver(playersState.value, installedPackages(), prefs)
 
     val prefsState: StateFlow<PlayerPrefs> =
         playerPrefs.stateIn(viewModelScope, SharingStarted.Eagerly, PlayerPrefs())
 
     /** platformId -> claimant players, for the settings screen. */
     fun claimantsByPlatform(): Map<String, List<PlayerDef>> =
-        platforms.associate { p -> p.id to players.filter { p.id in it.platformIds } }
+        platforms.associate { p -> p.id to playersState.value.filter { p.id in it.platformIds } }
 
     fun platformsForSettings(): List<Pair<String, String>> = platforms.map { it.id to it.name }
 
@@ -92,6 +100,37 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearGameOverride(game: GameEntity) {
         viewModelScope.launch { repo.clearGameOverride(game.uri) }
+    }
+
+    /** Launchable installed apps for the custom-emulator picker: label to packageName, sorted. */
+    fun launchableApps(): List<Pair<String, String>> {
+        val pm = getApplication<Application>().packageManager
+        val intent = android.content.Intent(android.content.Intent.ACTION_MAIN)
+            .addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(intent, 0)
+            .map { it.loadLabel(pm).toString() to it.activityInfo.packageName }
+            .distinctBy { it.second }
+            .filterNot { it.second == getApplication<Application>().packageName }
+            .sortedBy { it.first.lowercase() }
+    }
+
+    fun addCustomPlayer(name: String, packageName: String, platformIds: List<String>) {
+        viewModelScope.launch {
+            repo.saveCustomPlayer(
+                CustomPlayerEntity(
+                    id = "custom-$packageName",
+                    name = name,
+                    packageName = packageName,
+                    activityClass = null,
+                    action = "android.intent.action.VIEW",
+                    platformIds = platformIds.joinToString(","),
+                )
+            )
+        }
+    }
+
+    fun deleteCustomPlayer(playerId: String) {
+        viewModelScope.launch { repo.deleteCustomPlayer(playerId) }
     }
 
     private val artScraper = ArtScraper(repo, platforms)

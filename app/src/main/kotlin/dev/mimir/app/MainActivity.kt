@@ -94,10 +94,15 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                     showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
                     showSettings -> {
                         val installed = remember { viewModel.installedSnapshot() }
+                        val players by viewModel.playersState.collectAsState()
                         EmulatorSettingsScreen(
                             platforms = viewModel.platformsForSettings(),
                             claimants = viewModel.claimantsByPlatform(),
                             prefs = prefs,
+                            customPlayers = players.filter { it.id.startsWith("custom-") },
+                            launchableApps = viewModel::launchableApps,
+                            onAddCustom = viewModel::addCustomPlayer,
+                            onDeleteCustom = viewModel::deleteCustomPlayer,
                             isInstalled = { it.packageName in installed },
                             onSetDefault = viewModel::setPlatformDefault,
                             onBack = { showSettings = false },
