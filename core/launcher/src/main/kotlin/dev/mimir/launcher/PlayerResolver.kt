@@ -1,5 +1,11 @@
 package dev.mimir.launcher
 
+/** Bundled real emulators first, then custom players, then the fake-emulator fixture last. */
+fun mergePlayers(bundled: List<PlayerDef>, custom: List<PlayerDef>): List<PlayerDef> {
+    val (fake, real) = bundled.partition { it.id == "fake-emulator" }
+    return real + custom + fake
+}
+
 data class PlayerPrefs(
     val platformDefaults: Map<String, String> = emptyMap(), // platformId -> playerId
     val gameOverrides: Map<String, String> = emptyMap(),    // game uri -> playerId

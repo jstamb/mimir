@@ -64,6 +64,31 @@ class PlayerResolverTest {
     }
 
     @Test
+    fun `mergePlayers keeps fake last and slots customs after bundled real emulators`() {
+        val custom = PlayerDef("custom-com.example.emu", "My Emu", "com.example.emu", platformIds = listOf("n64"))
+        val merged = mergePlayers(bundled = players, custom = listOf(custom))
+        assertEquals(listOf("melonds", "drastic", "custom-com.example.emu", "fake-emulator"), merged.map { it.id })
+    }
+
+    @Test
+    fun `mergePlayers with no fake entry just appends customs`() {
+        val custom = PlayerDef("custom-x", "X", "com.example.x")
+        val merged = mergePlayers(bundled = listOf(real, other), custom = listOf(custom))
+        assertEquals(listOf("melonds", "drastic", "custom-x"), merged.map { it.id })
+    }
+
+    @Test
+    fun `custom claiming a platform wins installed-order over fake`() {
+        val custom = PlayerDef("custom-com.example.emu", "My Emu", "com.example.emu", platformIds = listOf("n64"))
+        val r = PlayerResolver(
+            mergePlayers(players, listOf(custom)),
+            installedPackages = setOf("com.example.emu", "dev.mimir.fakeemulator"),
+            prefs = PlayerPrefs(),
+        )
+        assertEquals("custom-com.example.emu", r.resolve("uri-x", "n64")?.id)
+    }
+
+    @Test
     fun `claimants lists registry order and isInstalled reflects the set`() {
         val r = resolver(installed = setOf("com.dsemu.drastic"))
         assertEquals(listOf("melonds", "drastic", "fake-emulator"), r.claimants("nds").map { it.id })
