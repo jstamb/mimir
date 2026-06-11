@@ -25,4 +25,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(project(":core:data"))
     implementation(libs.coroutines.android)
+    testImplementation(libs.junit)
+    // kotlin("test") alone resolves the frameworkless variant under AGP's built-in Kotlin
+    // (no KGP capability inference), leaving kotlin.test.Test unresolved — pin the JUnit variant.
+    testImplementation(kotlin("test-junit"))
 }
