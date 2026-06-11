@@ -3,9 +3,12 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M1 — end-to-end launch loop.** Scan a ROM folder, browse the grid,
-launch games in your emulators. Dual-screen shell, scraping, and theming land in
-M2–M5 (see `docs/superpowers/specs/`).
+**Status: M2a — persistent library + fast scanning.** Bulk SAF scanning (one
+query per directory), Room-backed library with instant cold-start, incremental
+rescans (no duplicates, no losses), a full scan-report screen for skipped
+files, and graceful error states for lost folder access. Next (M2b): emulator
+auto-detection, per-platform/per-game emulator choice, and custom player
+definitions.
 
 ## Why another launcher?
 
@@ -32,6 +35,7 @@ JDK 17 + Android SDK 36 required.
 | `:app` | Android shell — Compose UI, SAF scanning, intent dispatch |
 | `:core:scanner` | Pure JVM — platform registry + file→platform matcher |
 | `:core:launcher` | Pure JVM — player (emulator) registry + intent templates |
+| `:core:data` | Android library — Room persistence, diff-sync repository |
 | `:tools:fake-emulator` | Test fixture APK that displays any VIEW intent it receives |
 
 Platform and player registries are JSON (`core/*/src/main/resources/`) — PRs to
