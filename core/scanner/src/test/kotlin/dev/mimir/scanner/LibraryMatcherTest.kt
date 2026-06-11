@@ -83,4 +83,12 @@ class LibraryMatcherTest {
         assertTrue("Alpha Console" in skipped.reason)
         assertTrue("Beta Console" in skipped.reason)
     }
+
+    @Test
+    fun `matched game carries relativePath and lastModified through`() {
+        val scanned = ScannedFile(relativePath = "n64/GoldenEye.z64", uri = "content://x", lastModified = 99)
+        val game = matcher.match(listOf(scanned)).games.single()
+        assertEquals("n64/GoldenEye.z64", game.relativePath)
+        assertEquals(99, game.lastModified)
+    }
 }

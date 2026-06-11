@@ -5,12 +5,15 @@ data class ScannedFile(
     val relativePath: String,
     /** Opaque launchable identifier (SAF content URI on Android; anything in tests). */
     val uri: String,
+    val lastModified: Long = 0L,
 )
 
 data class Game(
     val title: String,
     val uri: String,
     val platformId: String,
+    val relativePath: String = "",
+    val lastModified: Long = 0L,
 )
 
 data class SkippedFile(val relativePath: String, val reason: String)
@@ -40,7 +43,7 @@ class LibraryMatcher(private val platforms: List<PlatformDef>) {
 
             when {
                 folderPlatform != null && ext in platformIdToExtensions.getValue(folderPlatform.id) ->
-                    games += Game(title, file.uri, folderPlatform.id)
+                    games += Game(title, file.uri, folderPlatform.id, file.relativePath, file.lastModified)
                 folderPlatform != null ->
                     skipped += SkippedFile(
                         file.relativePath,
@@ -50,7 +53,7 @@ class LibraryMatcher(private val platforms: List<PlatformDef>) {
                 else -> {
                     val byExt = extensionToPlatforms[ext].orEmpty()
                     when (byExt.size) {
-                        1 -> games += Game(title, file.uri, byExt.single().id)
+                        1 -> games += Game(title, file.uri, byExt.single().id, file.relativePath, file.lastModified)
                         0 -> skipped += SkippedFile(
                             file.relativePath,
                             "no platform registered for extension .$ext and no platform folder in path",
