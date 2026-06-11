@@ -122,6 +122,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun fetchArtwork() {
         if (scrapeProgress.value != null) return // already running
+        scrapeProgress.value = ArtScraper.Progress(0, 0)
         viewModelScope.launch {
             try {
                 artScraper.scrapeMissing { scrapeProgress.value = it }

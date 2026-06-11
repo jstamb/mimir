@@ -51,14 +51,16 @@ class ArtScraper(
         resolved
     }
 
-    private fun fetchListing(libretroName: String): List<String> =
-        listingCache.getOrPut(libretroName) {
-            runCatching {
-                client.newCall(Request.Builder().url(LibretroNames.listingUrl(libretroName)).build())
-                    .execute().use { response ->
-                        if (!response.isSuccessful) emptyList()
-                        else ListingParser.pngFiles(response.body?.string().orEmpty())
-                    }
-            }.getOrDefault(emptyList())
-        }
+    private fun fetchListing(libretroName: String): List<String> {
+        listingCache[libretroName]?.let { return it }
+        val listing = runCatching {
+            client.newCall(Request.Builder().url(LibretroNames.listingUrl(libretroName)).build())
+                .execute().use { response ->
+                    if (!response.isSuccessful) emptyList()
+                    else ListingParser.pngFiles(response.body?.string().orEmpty())
+                }
+        }.getOrDefault(emptyList())
+        if (listing.isNotEmpty()) listingCache[libretroName] = listing
+        return listing
+    }
 }
