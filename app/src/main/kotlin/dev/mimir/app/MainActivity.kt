@@ -43,6 +43,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val pickEsdeMedia = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            contentResolver.takePersistableUriPermission(
+                uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+            viewModel.importEsdeMedia(uri)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -50,6 +61,7 @@ class MainActivity : ComponentActivity() {
                 MainScreen(
                     viewModel = viewModel,
                     onPickFolder = { pickFolder.launch(null) },
+                    onImportEsde = { pickEsdeMedia.launch(null) },
                 )
             }
         }
@@ -57,7 +69,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
+fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde: () -> Unit) {
     val state by viewModel.state.collectAsState()
     val message by viewModel.message.collectAsState()
     val skipped by viewModel.skipped.collectAsState()
@@ -117,6 +129,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                         onShowReport = { showReport = true },
                         onShowSettings = { showSettings = true },
                         onFetchArtwork = viewModel::fetchArtwork,
+                        onImportEsde = onImportEsde,
                     )
                 }
             }
@@ -193,6 +206,7 @@ fun LibraryGrid(
     onShowReport: () -> Unit,
     onShowSettings: () -> Unit,
     onFetchArtwork: () -> Unit,
+    onImportEsde: () -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 140.dp),
@@ -211,6 +225,7 @@ fun LibraryGrid(
                     TextButton(onClick = onFetchArtwork, enabled = library.scraping == null) {
                         Text(if (library.scraping == null) "Fetch artwork" else "Artwork ${library.scraping.done}/${library.scraping.total}")
                     }
+                    TextButton(onClick = onImportEsde) { Text("Import ES-DE") }
                     TextButton(onClick = onShowSettings) { Text("Emulators") }
                     TextButton(onClick = onRescan, enabled = !library.scanning) { Text("Rescan") }
                     TextButton(onClick = onPickFolder) { Text("Change folder") }

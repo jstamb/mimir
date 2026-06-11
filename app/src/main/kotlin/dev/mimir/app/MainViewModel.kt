@@ -21,6 +21,7 @@ import dev.mimir.launcher.PlayerResolver
 import dev.mimir.launcher.buildIntentSpec
 import dev.mimir.launcher.mergePlayers
 import dev.mimir.scanner.LibraryMatcher
+import dev.mimir.scraper.EsdeImportMatcher
 import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
 import dev.mimir.scanner.WalkEngine
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -212,6 +214,30 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 artScraper.scrapeMissing { scrapeProgress.value = it }
             } finally {
                 scrapeProgress.value = null
+            }
+        }
+    }
+
+    fun importEsdeMedia(treeUri: Uri) {
+        viewModelScope.launch {
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    val source = DocumentsTreeSource(getApplication<Application>().contentResolver, treeUri)
+                    val mediaFiles = WalkEngine.walk(source, source.rootUri)
+                    val games = repo.games.first()
+                    EsdeImportMatcher.match(
+                        mediaFiles = mediaFiles,
+                        games = games.map { dev.mimir.scanner.Game(it.title, it.uri, it.platformId, it.relativePath, it.lastModified) },
+                        platforms = platforms,
+                    )
+                }
+                repo.saveArt(result.covers.map { (gameUri, imageUri) -> MediaEntity(gameUri, imageUri) })
+                _message.value = buildString {
+                    append("Imported ${result.covers.size} covers from ES-DE")
+                    if (result.videoCount > 0) append(" — ${result.videoCount} videos found (video support comes with theming)")
+                }
+            } catch (e: TreeAccessException) {
+                _message.value = "Couldn't read that folder (${e.message})"
             }
         }
     }
