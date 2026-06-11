@@ -23,6 +23,6 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
-    implementation(libs.documentfile)
+    implementation(project(":core:data"))
     implementation(libs.coroutines.android)
 }
