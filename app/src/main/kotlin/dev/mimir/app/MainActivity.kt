@@ -6,8 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.mimir.data.GameEntity
 import dev.mimir.data.SkippedFileEntity
+import dev.mimir.launcher.PlayerDef
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -60,6 +63,9 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
     val skipped by viewModel.skipped.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     var showReport by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var sheetGame by remember { mutableStateOf<GameEntity?>(null) }
+    val prefs by viewModel.prefsState.collectAsState()
 
     LaunchedEffect(message) {
         message?.let { snackbar.showSnackbar(it); viewModel.consumeMessage() }
@@ -84,16 +90,76 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit) {
                         OutlinedButton(onClick = onPickFolder) { Text("Change folder") }
                     }
                 }
-                is UiState.Library ->
-                    if (showReport) ScanReportScreen(skipped, onBack = { showReport = false })
-                    else LibraryGrid(
+                is UiState.Library -> when {
+                    showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
+                    showSettings -> EmulatorSettingsScreen(
+                        platforms = viewModel.platformsForSettings(),
+                        claimants = viewModel.claimantsByPlatform(),
+                        prefs = prefs,
+                        isInstalled = viewModel::isPlayerInstalled,
+                        onSetDefault = viewModel::setPlatformDefault,
+                        onBack = { showSettings = false },
+                    )
+                    else -> LibraryGrid(
                         s,
                         onGameClick = viewModel::launchGame,
+                        onGameLongClick = { sheetGame = it },
                         onRescan = viewModel::rescan,
                         onPickFolder = onPickFolder,
                         onShowReport = { showReport = true },
+                        onShowSettings = { showSettings = true },
                         onFetchArtwork = viewModel::fetchArtwork,
                     )
+                }
+            }
+            sheetGame?.let { game ->
+                PlayWithSheet(
+                    game = game,
+                    claimants = viewModel.claimantsByPlatform()[game.platformId].orEmpty(),
+                    overrideId = prefs.gameOverrides[game.uri],
+                    isInstalled = viewModel::isPlayerInstalled,
+                    onPick = { player ->
+                        viewModel.setGameOverride(game, player.id)
+                        sheetGame = null
+                        viewModel.launchGame(game)
+                    },
+                    onClearOverride = { viewModel.clearGameOverride(game); sheetGame = null },
+                    onDismiss = { sheetGame = null },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlayWithSheet(
+    game: GameEntity,
+    claimants: List<PlayerDef>,
+    overrideId: String?,
+    isInstalled: (PlayerDef) -> Boolean,
+    onPick: (PlayerDef) -> Unit,
+    onClearOverride: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+            Text("Play \"${game.title}\" with…", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            claimants.forEach { player ->
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            player.name +
+                                (if (player.id == overrideId) "  ✓ current" else "") +
+                                (if (!isInstalled(player)) "  (not installed)" else "")
+                        )
+                    },
+                    modifier = Modifier.clickable { onPick(player) },
+                )
+            }
+            if (overrideId != null) {
+                TextButton(onClick = onClearOverride) { Text("Clear override — use system default") }
             }
         }
     }
@@ -112,9 +178,11 @@ private fun BoxScope.CenteredColumn(content: @Composable ColumnScope.() -> Unit)
 fun LibraryGrid(
     library: UiState.Library,
     onGameClick: (GameEntity) -> Unit,
+    onGameLongClick: (GameEntity) -> Unit,
     onRescan: () -> Unit,
     onPickFolder: () -> Unit,
     onShowReport: () -> Unit,
+    onShowSettings: () -> Unit,
     onFetchArtwork: () -> Unit,
 ) {
     LazyVerticalGrid(
@@ -134,11 +202,32 @@ fun LibraryGrid(
                     TextButton(onClick = onFetchArtwork, enabled = library.scraping == null) {
                         Text(if (library.scraping == null) "Fetch artwork" else "Artwork ${library.scraping.done}/${library.scraping.total}")
                     }
+                    TextButton(onClick = onShowSettings) { Text("Emulators") }
                     TextButton(onClick = onRescan, enabled = !library.scanning) { Text("Rescan") }
                     TextButton(onClick = onPickFolder) { Text("Change folder") }
                 }
                 if (library.scanning) {
                     LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 4.dp))
+                }
+                if (library.banner != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                library.banner,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.weight(1f),
+                            )
+                            TextButton(onClick = onRescan) { Text("Retry") }
+                        }
+                    }
                 }
             }
         }
@@ -154,7 +243,12 @@ fun LibraryGrid(
                 }
             }
             items(games, key = { it.uri }) { game ->
-                GameCard(game, artUrl = library.art[game.uri], onClick = { onGameClick(game) })
+                GameCard(
+                    game,
+                    artUrl = library.art[game.uri],
+                    onClick = { onGameClick(game) },
+                    onLongClick = { onGameLongClick(game) },
+                )
             }
         }
         if (library.skippedCount > 0) {
@@ -167,9 +261,10 @@ fun LibraryGrid(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GameCard(game: GameEntity, artUrl: String?, onClick: () -> Unit) {
-    Card(Modifier.height(180.dp).clickable(onClick = onClick)) {
+fun GameCard(game: GameEntity, artUrl: String?, onClick: () -> Unit, onLongClick: () -> Unit) {
+    Card(Modifier.height(180.dp).combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
         Box(Modifier.fillMaxSize()) {
             if (artUrl != null) {
                 AsyncImage(

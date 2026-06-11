@@ -6,15 +6,17 @@ import android.net.Uri
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.room.Room
 import dev.mimir.data.GameEntity
+import dev.mimir.data.GamePrefEntity
 import dev.mimir.data.GameRepository
 import dev.mimir.data.MediaEntity
-import dev.mimir.data.MimirDatabase
+import dev.mimir.data.PlatformPrefEntity
 import dev.mimir.data.SkippedFileEntity
+import dev.mimir.launcher.PlayerDef
 import dev.mimir.launcher.PlayerDefs
+import dev.mimir.launcher.PlayerPrefs
+import dev.mimir.launcher.PlayerResolver
 import dev.mimir.launcher.buildIntentSpec
-import dev.mimir.launcher.defaultPlayerFor
 import dev.mimir.scanner.LibraryMatcher
 import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +40,7 @@ sealed interface UiState {
         val skippedCount: Int,
         val scanning: Boolean,
         val scraping: ArtScraper.Progress?,
+        val banner: String? = null,
     ) : UiState
 }
 
@@ -46,10 +50,48 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val platformNames = platforms.associate { it.id to it.name }
     private val matcher = LibraryMatcher(platforms)
     private val players = PlayerDefs.load()
-    private val db = Room.databaseBuilder(app, MimirDatabase::class.java, "mimir.db")
-        .fallbackToDestructiveMigration(dropAllTables = true)
-        .build()
+
+    private fun installedPackages(): Set<String> =
+        getApplication<Application>().packageManager.getInstalledPackages(0)
+            .mapTo(mutableSetOf()) { it.packageName }
+
+    private val db = (app as MimirApp).db
     private val repo = GameRepository(db.libraryDao())
+
+    private val playerPrefs = combine(repo.platformPrefs, repo.gamePrefs) { platform, game ->
+        PlayerPrefs(
+            platformDefaults = platform.associate { it.platformId to it.playerId },
+            gameOverrides = game.associate { it.gameUri to it.playerId },
+        )
+    }
+
+    /** Snapshot resolver for one-shot decisions (launch, settings render). */
+    private fun resolver(prefs: PlayerPrefs) = PlayerResolver(players, installedPackages(), prefs)
+
+    val prefsState: StateFlow<PlayerPrefs> =
+        playerPrefs.stateIn(viewModelScope, SharingStarted.Eagerly, PlayerPrefs())
+
+    /** platformId -> claimant players, for the settings screen. */
+    fun claimantsByPlatform(): Map<String, List<PlayerDef>> =
+        platforms.associate { p -> p.id to players.filter { p.id in it.platformIds } }
+
+    fun platformsForSettings(): List<Pair<String, String>> = platforms.map { it.id to it.name }
+
+    fun isPlayerInstalled(player: PlayerDef): Boolean =
+        player.packageName in installedPackages()
+
+    fun setPlatformDefault(platformId: String, playerId: String) {
+        viewModelScope.launch { repo.setPlatformDefault(platformId, playerId) }
+    }
+
+    fun setGameOverride(game: GameEntity, playerId: String) {
+        viewModelScope.launch { repo.setGameOverride(game.uri, playerId) }
+    }
+
+    fun clearGameOverride(game: GameEntity) {
+        viewModelScope.launch { repo.clearGameOverride(game.uri) }
+    }
+
     private val artScraper = ArtScraper(repo, platforms)
     private val scrapeProgress = MutableStateFlow<ArtScraper.Progress?>(null)
 
@@ -75,8 +117,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val state: StateFlow<UiState> =
         combine(treeUri, libraryData, skipped, status) { uri, lib, skip, st ->
             when {
-                st.error != null -> UiState.Error(st.error)
                 uri == null -> UiState.NeedsFolder
+                st.error != null && lib.games.isEmpty() -> UiState.Error(st.error)
                 else -> UiState.Library(
                     gamesByPlatform = lib.games
                         .groupBy { platformNames[it.platformId] ?: it.platformId }
@@ -85,6 +127,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     skippedCount = skip.size,
                     scanning = st.scanning,
                     scraping = st.scraping,
+                    banner = st.error,
                 )
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.NeedsFolder)
@@ -133,9 +176,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun launchGame(game: GameEntity) {
-        val player = defaultPlayerFor(players, game.platformId)
+        val player = resolver(prefsState.value).resolve(game.uri, game.platformId)
         if (player == null) {
             _message.value = "No emulator registered for ${platformNames[game.platformId] ?: game.platformId}"
+            return
+        }
+        if (!isPlayerInstalled(player)) {
+            _message.value = "${player.name} is not installed — install it or pick another emulator in Settings"
             return
         }
         val spec = buildIntentSpec(player, romUri = game.uri, title = game.title)

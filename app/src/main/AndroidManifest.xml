@@ -7,7 +7,10 @@
         </intent>
     </queries>
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Launcher needs to see which emulators are installed; app is sideload-distributed. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <application
+        android:name=".MimirApp"
         android:label="Mimir"
         android:theme="@style/Theme.Mimir">
         <activity android:name=".MainActivity" android:exported="true">
