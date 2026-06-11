@@ -17,8 +17,10 @@ class ArtMatcher(listing: List<String>) {
         val starts = candidates.filter { it.normalized.startsWith(wanted) }
         val contains = candidates.filter { wanted in it.normalized }
         val tier = listOf(exact, starts, contains).firstOrNull { it.isNotEmpty() } ?: return null
+        val demoTags = listOf("(demo", "(kiosk", "(beta", "(proto", "(sample")
         return tier.sortedWith(
-            compareByDescending<Candidate> { "(usa)" in it.fileName.lowercase() }
+            compareBy<Candidate> { c -> demoTags.any { it in c.fileName.lowercase() } }
+                .thenByDescending { "(usa)" in it.fileName.lowercase() }
                 .thenBy { it.fileName.length }
         ).first().fileName
     }

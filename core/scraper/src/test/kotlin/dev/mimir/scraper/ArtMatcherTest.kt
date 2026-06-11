@@ -11,6 +11,8 @@ class ArtMatcherTest {
         "Mario Kart 64 (USA).png",
         "Mario Kart 64 (Europe) (En,Fr,De).png",
         "Mario Kart DS (USA) (En,Fr,De,Es,It).png",
+        "Mario Kart DS (USA) (Demo) (Kiosk).png",
+        "Metroid Prime (USA) (Kiosk).png",
         "Super Mario 64 (USA).png",
     )
     private val matcher = ArtMatcher(listing)
@@ -39,5 +41,15 @@ class ArtMatcherTest {
     @Test
     fun `exact beats startsWith - Mario Kart 64 does not steal Super Mario 64`() {
         assertEquals("Super Mario 64 (USA).png", matcher.bestMatch("Super Mario 64"))
+    }
+
+    @Test
+    fun `retail release beats Demo-Kiosk variants in tie-break`() {
+        assertEquals("Mario Kart DS (USA) (En,Fr,De,Es,It).png", matcher.bestMatch("Mario Kart DS"))
+    }
+
+    @Test
+    fun `demo variant still matches when it is the only candidate`() {
+        assertEquals("Metroid Prime (USA) (Kiosk).png", matcher.bestMatch("Metroid Prime"))
     }
 }
