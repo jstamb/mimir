@@ -23,13 +23,20 @@ class SgdbClient(
     fun artFor(title: String): GameArt? {
         val term = URLEncoder.encode(title, Charsets.UTF_8).replace("+", "%20")
         val search = get<SearchResponse>("$base/search/autocomplete/$term") ?: return null
-        val gameId = search.data.firstOrNull()?.id ?: return null
+        val wanted = normalize(title)
+        val gameId = (
+            search.data.firstOrNull { normalize(it.name) == wanted }
+                ?: search.data.filter { normalize(it.name).startsWith(wanted) }.minByOrNull { it.name.length }
+                ?: search.data.firstOrNull()
+            )?.id ?: return null
         return GameArt(
             gridUrl = firstAsset("$base/grids/game/$gameId?dimensions=600x900"),
             heroUrl = firstAsset("$base/heroes/game/$gameId"),
             logoUrl = firstAsset("$base/logos/game/$gameId"),
         )
     }
+
+    private fun normalize(s: String): String = s.lowercase().replace(Regex("""[^a-z0-9]+"""), " ").trim()
 
     private fun firstAsset(url: String): String? = get<AssetResponse>(url)?.data?.firstOrNull()?.url
 

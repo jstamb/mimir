@@ -44,4 +44,24 @@ class SgdbClientTest {
         val garbage = SgdbClient("k", fetcher = { url, _ -> if ("search" in url) "<html>nope</html>" else null })
         assertNull(garbage.artFor("Mario Kart 64"))
     }
+
+    @Test
+    fun `prefers exact normalized name over first hit, then shortest startsWith`() {
+        fun clientWithHits(hitsJson: String) = SgdbClient("k", fetcher = { url, _ ->
+            when {
+                "search/autocomplete/" in url -> """{"success":true,"data":$hitsJson}"""
+                "grids/game/7" in url -> """{"success":true,"data":[{"id":1,"url":"https://cdn/right.png"}]}"""
+                else -> """{"success":true,"data":[]}"""
+            }
+        })
+        // exact normalized match wins over earlier hits
+        val exact = clientWithHits("""[{"id":5,"name":"GoldenEye: Source"},{"id":7,"name":"GoldenEye 007"}]""")
+        assertEquals("https://cdn/right.png", exact.artFor("GoldenEye 007")?.gridUrl)
+        // no exact: shortest normalized startsWith wins ("GoldenEye" -> 007 beats Source)
+        val starts = clientWithHits("""[{"id":5,"name":"GoldenEye: Source"},{"id":7,"name":"GoldenEye 007"}]""")
+        assertEquals("https://cdn/right.png", starts.artFor("GoldenEye")?.gridUrl)
+        // nothing related: falls back to first hit (id 5 -> no grids -> null gridUrl but non-null result)
+        val fallback = clientWithHits("""[{"id":5,"name":"Something Else"}]""")
+        assertEquals(null, fallback.artFor("GoldenEye")?.gridUrl)
+    }
 }
