@@ -28,6 +28,8 @@ import coil3.compose.AsyncImage
 import dev.mimir.data.GameEntity
 import dev.mimir.data.SkippedFileEntity
 import dev.mimir.launcher.PlayerDef
+import dev.mimir.theme.LocalMimirTheme
+import dev.mimir.theme.MimirTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -57,12 +59,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
-                MainScreen(
-                    viewModel = viewModel,
-                    onPickFolder = { pickFolder.launch(null) },
-                    onImportEsde = { pickEsdeMedia.launch(null) },
-                )
+            val config by viewModel.themeConfig.collectAsState()
+            val ambient by viewModel.ambient.collectAsState()
+            MimirTheme(config = config, ambient = ambient) {
+                MaterialTheme(colorScheme = darkColorScheme(primary = LocalMimirTheme.current.primary)) {
+                    MainScreen(
+                        viewModel = viewModel,
+                        onPickFolder = { pickFolder.launch(null) },
+                        onImportEsde = { pickEsdeMedia.launch(null) },
+                    )
+                }
             }
         }
     }
@@ -84,7 +90,12 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
     }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(LocalMimirTheme.current.glow, Color.Transparent)))
+                .padding(padding)
+        ) {
             when (val s = state) {
                 UiState.NeedsFolder -> CenteredColumn {
                     Text("Mimir", style = MaterialTheme.typography.headlineLarge)

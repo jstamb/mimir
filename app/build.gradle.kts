@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(project(":core:data"))
+    implementation(project(":core:theme"))
     implementation(project(":core:scraper"))
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)

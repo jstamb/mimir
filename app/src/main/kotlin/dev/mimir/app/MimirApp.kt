@@ -14,4 +14,6 @@ class MimirApp : Application() {
             .fallbackToDestructiveMigration(dropAllTables = true) // pre-release safety net for v1 installs only
             .build()
     }
+    val themeStore by lazy { dev.mimir.theme.ThemeStore(this) }
+    val paletteExtractor by lazy { dev.mimir.theme.PaletteExtractor(this) }
 }

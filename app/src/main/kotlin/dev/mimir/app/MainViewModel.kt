@@ -21,6 +21,9 @@ import dev.mimir.launcher.PlayerResolver
 import dev.mimir.launcher.buildIntentSpec
 import dev.mimir.launcher.mergePlayers
 import dev.mimir.scanner.LibraryMatcher
+import dev.mimir.theme.AmbientPalette
+import dev.mimir.theme.PaletteMode
+import dev.mimir.theme.ThemeConfig
 import dev.mimir.scraper.EsdeImportMatcher
 import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
@@ -62,6 +65,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val db = (app as MimirApp).db
     private val repo = GameRepository(db.libraryDao())
+
+    // Order matters: these reference repo above (same init-order NPE class as M2c).
+    private val themeStore = (app as MimirApp).themeStore
+    private val paletteExtractor = (app as MimirApp).paletteExtractor
+
+    val themeConfig: StateFlow<ThemeConfig> =
+        themeStore.config.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeConfig())
+
+    /** Ambient palette follows the most recently played game's boxart (M5a-3 will follow browse focus). */
+    val ambient: StateFlow<AmbientPalette> =
+        combine(repo.playStates, repo.media) { plays, media ->
+            val recentUri = plays.maxByOrNull { it.lastPlayedAt }?.gameUri
+            media.firstOrNull { it.gameUri == recentUri && it.kind == "boxart" }?.boxartUrl
+        }.map { artUri ->
+            if (themeConfig.value.paletteMode == PaletteMode.FIXED)
+                AmbientPalette.from(themeConfig.value.fixedSeedArgb)
+            else paletteExtractor.extract(artUri)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, AmbientPalette.from(AmbientPalette.FALLBACK_ARGB))
 
     val playersState: StateFlow<List<PlayerDef>> =
         repo.customPlayers.map { custom -> mergePlayers(bundledPlayers, custom.map { it.toPlayerDef() }) }
