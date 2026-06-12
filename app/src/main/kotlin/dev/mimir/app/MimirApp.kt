@@ -16,4 +16,5 @@ class MimirApp : Application() {
     }
     val themeStore by lazy { dev.mimir.theme.ThemeStore(this) }
     val paletteExtractor by lazy { dev.mimir.theme.PaletteExtractor(this) }
+    val soundEngine by lazy { SoundEngine(this) }
 }

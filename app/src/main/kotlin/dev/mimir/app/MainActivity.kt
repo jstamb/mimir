@@ -22,7 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -87,8 +89,10 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
     var browseSystem by rememberSaveable { mutableStateOf<String?>(null) }
     var sheetGame by remember { mutableStateOf<GameEntity?>(null) }
     val prefs by viewModel.prefsState.collectAsState()
+    val haptic = LocalHapticFeedback.current
 
     BackHandler(enabled = route != Route.HOME) {
+        viewModel.play(SoundEngine.Cue.BACK)
         route = if (route == Route.BROWSE) Route.HOME else Route.BROWSE
     }
 
@@ -175,10 +179,19 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                     HomeScreen(
                                         recents = recents,
                                         systems = viewModel.systemRow(s),
-                                        onPlay = viewModel::launchGame,
+                                        onPlay = { game ->
+                                            if (viewModel.hapticsEnabled()) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.launchGame(game)
+                                        },
                                         onGameLongPress = { sheetGame = it },
-                                        onOpenSystem = { browseSystem = it; route = Route.BROWSE },
-                                        onBrowseAll = { browseSystem = null; route = Route.BROWSE },
+                                        onOpenSystem = {
+                                            viewModel.play(SoundEngine.Cue.NAV)
+                                            browseSystem = it; route = Route.BROWSE
+                                        },
+                                        onBrowseAll = {
+                                            viewModel.play(SoundEngine.Cue.NAV)
+                                            browseSystem = null; route = Route.BROWSE
+                                        },
                                     )
                                 }
                                 Route.REPORT -> ScanReportScreen(skipped, onBack = { route = Route.BROWSE })
@@ -228,9 +241,18 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                     BrowseScreen(
                                         library = s,
                                         selectedUri = selectedUri,
-                                        onGameTap = viewModel::onGameTapped,
+                                        onGameTap = { game ->
+                                            if (viewModel.hapticsEnabled()) {
+                                                haptic.performHapticFeedback(
+                                                    if (game.uri == selectedUri) HapticFeedbackType.LongPress // re-tap launches
+                                                    else HapticFeedbackType.TextHandleMove                    // first tap selects
+                                                )
+                                            }
+                                            viewModel.onGameTapped(game)
+                                        },
                                         onGameLongPress = { sheetGame = it },
                                         initialSystem = browseSystem,
+                                        onSystemChange = { viewModel.play(SoundEngine.Cue.NAV) },
                                     )
                                 }
                             }

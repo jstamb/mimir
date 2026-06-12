@@ -76,6 +76,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val themeConfig: StateFlow<ThemeConfig> =
         themeStore.config.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeConfig())
 
+    private val sound = (app as MimirApp).soundEngine
+
+    init {
+        viewModelScope.launch { themeStore.config.collect { sound.config = it } }
+    }
+
+    fun play(cue: SoundEngine.Cue) = sound.play(cue)
+    fun hapticsEnabled() = sound.hapticsEnabled()
+
     private val selectedGameUri = MutableStateFlow<String?>(null)
     val selectedUriState: StateFlow<String?> = selectedGameUri
 
@@ -83,7 +92,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Tap behavior: first tap selects, second tap on the same game launches. */
     fun onGameTapped(game: GameEntity) {
-        if (selectedGameUri.value == game.uri) launchGame(game) else selectGame(game)
+        if (selectedGameUri.value == game.uri) {
+            launchGame(game)
+        } else {
+            play(SoundEngine.Cue.SELECT)
+            selectGame(game)
+        }
     }
 
     /** uri of the game driving the hero pane: selected, else most recently played. */
@@ -383,7 +397,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val spec = buildIntentSpec(player, romUri = game.uri, title = game.title)
         when (val result = LaunchController.launch(getApplication(), spec)) {
             is LaunchResult.Failure -> _message.value = result.reason
-            LaunchResult.Success -> viewModelScope.launch { repo.stampPlayed(game.uri, System.currentTimeMillis()) }
+            LaunchResult.Success -> {
+                play(SoundEngine.Cue.LAUNCH)
+                viewModelScope.launch { repo.stampPlayed(game.uri, System.currentTimeMillis()) }
+            }
         }
     }
 
