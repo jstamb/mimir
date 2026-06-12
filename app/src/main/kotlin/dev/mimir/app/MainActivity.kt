@@ -9,16 +9,23 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,8 +36,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -411,16 +420,46 @@ private fun BoxScope.CenteredColumn(content: @Composable ColumnScope.() -> Unit)
     )
 }
 
+/** Shared press feedback: cards/tiles scale down slightly while pressed. */
+@Composable
+fun Modifier.pressScale(interactionSource: MutableInteractionSource): Modifier {
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, spring(), label = "pressScale")
+    return graphicsLayer { scaleX = scale; scaleY = scale }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GameCard(game: GameEntity, artUrl: String?, selected: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
+fun GameCard(
+    game: GameEntity,
+    artUrl: String?,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val shape = CardDefaults.shape
+    val theme = LocalMimirTheme.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val borderColor by animateColorAsState(
+        if (selected) theme.primary else Color.White.copy(alpha = 0.14f),
+        tween(250),
+        label = "cardBorder",
+    )
+    val glowElevation by animateDpAsState(if (selected) 16.dp else 2.dp, tween(250), label = "cardGlow")
     Card(
-        Modifier
+        modifier
             .height(180.dp)
-            .then(if (selected) Modifier.border(2.dp, LocalMimirTheme.current.primary, shape) else Modifier)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            .pressScale(interactionSource)
+            .shadow(glowElevation, shape, ambientColor = theme.primary, spotColor = theme.primary)
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
         shape = shape,
+        border = BorderStroke(1.dp, borderColor),
     ) {
         Box(Modifier.fillMaxSize()) {
             if (artUrl != null) {

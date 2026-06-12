@@ -1,9 +1,12 @@
 package dev.mimir.app
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -14,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -51,10 +55,19 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(recents, key = { it.game.uri }) { entry ->
+                    val interactionSource = remember { MutableInteractionSource() }
                     Card(
                         Modifier
+                            .animateItem()
                             .size(width = 132.dp, height = 178.dp)
-                            .combinedClickable(onClick = { onPlay(entry.game) }, onLongClick = { onGameLongPress(entry.game) }),
+                            .pressScale(interactionSource)
+                            .combinedClickable(
+                                interactionSource = interactionSource,
+                                indication = LocalIndication.current,
+                                onClick = { onPlay(entry.game) },
+                                onLongClick = { onGameLongPress(entry.game) },
+                            ),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
                     ) {
                         Box(Modifier.fillMaxSize()) {
                             if (entry.artUrl != null) {
@@ -93,10 +106,18 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(systems, key = { it.first }) { (name, count) ->
+                val interactionSource = remember { MutableInteractionSource() }
                 Surface(
                     color = Color.White.copy(alpha = 0.06f),
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.clickable { onOpenSystem(name) },
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+                    modifier = Modifier
+                        .animateItem()
+                        .pressScale(interactionSource)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                        ) { onOpenSystem(name) },
                 ) {
                     Column(Modifier.padding(horizontal = 18.dp, vertical = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(name, style = MaterialTheme.typography.titleSmall, color = Color.White.copy(alpha = 0.9f))

@@ -1,5 +1,7 @@
 package dev.mimir.app
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -54,12 +57,16 @@ fun BrowseScreen(
                 items(systems, key = { it }) { system ->
                     val on = system == activeSystem
                     Surface(
-                        color = if (on) theme.glow else Color.White.copy(alpha = 0.05f),
+                        color = Color.White.copy(alpha = if (on) 0.18f else 0.07f),
                         contentColor = if (on) Color.White else Color.White.copy(alpha = 0.6f),
                         shape = MaterialTheme.shapes.extraLarge,
-                        modifier = Modifier.clickable {
-                            if (system != activeSystem) { activeSystem = system; onSystemChange() }
-                        },
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = if (on) 0.35f else 0.10f)),
+                        modifier = Modifier
+                            // active tab carries the ambient tint under its translucent white wash
+                            .then(if (on) Modifier.background(theme.glow, MaterialTheme.shapes.extraLarge) else Modifier)
+                            .clickable {
+                                if (system != activeSystem) { activeSystem = system; onSystemChange() }
+                            },
                     ) {
                         Text(
                             "$system  ·  ${library.gamesByPlatform[system].orEmpty().size}",
@@ -80,6 +87,13 @@ fun BrowseScreen(
                 onValueChange = { query = it },
                 placeholder = { Text("Search ${allGames.size} games") },
                 singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White.copy(alpha = 0.08f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+                    focusedBorderColor = Color.White.copy(alpha = 0.35f),
+                    unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                ),
                 modifier = Modifier.weight(1f).heightIn(max = 56.dp),
             )
             TextButton(onClick = { listMode = !listMode }) { Text(if (listMode) "⊞ Grid" else "≡ List") }
@@ -103,9 +117,13 @@ fun BrowseScreen(
                                 // ListItem paints its own opaque container, so a Modifier.background
                                 // behind it is invisible — the highlight must be the containerColor.
                                 colors = ListItemDefaults.colors(
-                                    containerColor = if (game.uri == selectedUri) theme.glow else Color.Transparent,
+                                    containerColor = if (game.uri == selectedUri) theme.glow else Color.White.copy(alpha = 0.04f),
                                 ),
-                                modifier = Modifier.clickable { onGameTap(game) },
+                                modifier = Modifier
+                                    .animateItem()
+                                    .padding(vertical = 2.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .clickable { onGameTap(game) },
                             )
                         }
                     }
@@ -125,6 +143,7 @@ fun BrowseScreen(
                                 selected = game.uri == selectedUri,
                                 onClick = { onGameTap(game) },
                                 onLongClick = { onGameLongPress(game) },
+                                modifier = Modifier.animateItem(), // placement animation on filter/sort
                             )
                         }
                     }
