@@ -170,17 +170,25 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                     Box(Modifier.fillMaxSize()) {
                         // L1 — hero art fills the entire screen behind everything
                         Crossfade(
-                            targetState = heroState.heroUrl ?: heroState.boxartUrl,
+                            targetState = heroState.heroUrl to heroState.boxartUrl,
                             animationSpec = tween(600),
                             label = "heroArt",
-                        ) { art ->
+                        ) { (heroUrl, boxartUrl) ->
+                            val art = heroUrl ?: boxartUrl
                             if (art != null) {
-                                AsyncImage(
-                                    model = art,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize().hazeSource(hazeState),
-                                )
+                                Box(Modifier.fillMaxSize().background(theme.scrim).hazeSource(hazeState)) {
+                                    AsyncImage(
+                                        model = art,
+                                        contentDescription = null,
+                                        // SGDB heroes are wide banners — width-fit them to the top instead of
+                                        // crop-filling the whole screen (which over-zooms). Portrait boxart
+                                        // fallback still crops, but only within the top half.
+                                        contentScale = if (heroUrl != null) ContentScale.FillWidth else ContentScale.Crop,
+                                        alignment = Alignment.TopCenter,
+                                        modifier = if (heroUrl != null) Modifier.fillMaxWidth().align(Alignment.TopCenter)
+                                        else Modifier.fillMaxWidth().fillMaxHeight(0.55f).align(Alignment.TopCenter),
+                                    )
+                                }
                             } else {
                                 Box(Modifier.fillMaxSize().background(theme.scrim).hazeSource(hazeState))
                             }

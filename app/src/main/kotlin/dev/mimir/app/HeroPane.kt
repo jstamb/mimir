@@ -4,7 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -74,7 +75,9 @@ fun HeroOverlay(
         targetState = hero,
         contentKey = { it.game?.uri },
         transitionSpec = {
-            (fadeIn(tween(350)) + slideInVertically { it / 6 }) togetherWith fadeOut(tween(150))
+            // logo + pills sweep in from the left, exit to the right of where they came from
+            (fadeIn(tween(400)) + slideInHorizontally(tween(400)) { -it / 2 }) togetherWith
+                (fadeOut(tween(180)) + slideOutHorizontally(tween(180)) { -it / 4 })
         },
         label = "heroOverlay",
         modifier = modifier,
