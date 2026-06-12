@@ -16,7 +16,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -265,7 +267,21 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                             AnimatedContent(
                                 targetState = route,
                                 transitionSpec = {
-                                    (slideInVertically { it / 8 } + fadeIn(tween(250))) togetherWith fadeOut(tween(150))
+                                    val detail = setOf(Route.SETTINGS, Route.REPORT)
+                                    when {
+                                        // entering a detail screen: slide in from the right
+                                        targetState in detail ->
+                                            (slideInHorizontally { it / 6 } + fadeIn(tween(250))) togetherWith
+                                                fadeOut(tween(150))
+                                        // leaving a detail screen: slide it back out to the right
+                                        initialState in detail ->
+                                            (slideInHorizontally { -it / 6 } + fadeIn(tween(250))) togetherWith
+                                                (slideOutHorizontally { it / 6 } + fadeOut(tween(150)))
+                                        // HOME <-> BROWSE: crossfade + slide-up
+                                        else ->
+                                            (slideInVertically { it / 8 } + fadeIn(tween(250))) togetherWith
+                                                fadeOut(tween(150))
+                                    }
                                 },
                                 label = "route",
                             ) { r ->

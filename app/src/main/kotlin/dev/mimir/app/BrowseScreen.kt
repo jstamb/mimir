@@ -1,5 +1,7 @@
 package dev.mimir.app
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,11 +43,6 @@ fun BrowseScreen(
     val theme = LocalMimirTheme.current
 
     val allGames = library.gamesByPlatform[activeSystem].orEmpty()
-    val visibleTitles = BrowseLogic.filter(allGames.map { it.title }, query).toSet()
-    val games = allGames.filter { it.title in visibleTitles }
-    val gridState = rememberLazyGridState()
-    val scope = rememberCoroutineScope()
-    val sections = remember(games) { BrowseLogic.alphaSections(games.map { it.title }) }
 
     Column(Modifier.fillMaxSize()) {
         // System tabs (horizontal scroll when many)
@@ -98,6 +95,15 @@ fun BrowseScreen(
             )
             TextButton(onClick = { listMode = !listMode }) { Text(if (listMode) "⊞ Grid" else "≡ List") }
         }
+        // Tab switches crossfade the grid/list region; each system composes its own
+        // list (and scroll state) so both sides of the fade show the right content.
+        Crossfade(targetState = activeSystem, animationSpec = tween(200), label = "systemContent") { sys ->
+        val sysGames = library.gamesByPlatform[sys].orEmpty()
+        val visibleTitles = BrowseLogic.filter(sysGames.map { it.title }, query).toSet()
+        val games = sysGames.filter { it.title in visibleTitles }
+        val gridState = rememberLazyGridState()
+        val scope = rememberCoroutineScope()
+        val sections = remember(games) { BrowseLogic.alphaSections(games.map { it.title }) }
         Row(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
                 if (listMode) {
@@ -155,6 +161,7 @@ fun BrowseScreen(
                     onJump = { index -> scope.launch { gridState.scrollToItem(index) } },
                 )
             }
+        }
         }
     }
 }

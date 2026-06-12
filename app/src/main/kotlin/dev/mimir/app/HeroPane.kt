@@ -1,5 +1,11 @@
 package dev.mimir.app
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -64,8 +70,17 @@ fun HeroOverlay(
     emulatorName: (dev.mimir.data.GameEntity) -> String,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier) {
-        val game = hero.game
+    AnimatedContent(
+        targetState = hero,
+        contentKey = { it.game?.uri },
+        transitionSpec = {
+            (fadeIn(tween(350)) + slideInVertically { it / 6 }) togetherWith fadeOut(tween(150))
+        },
+        label = "heroOverlay",
+        modifier = modifier,
+    ) { h ->
+    Box(Modifier.fillMaxSize()) {
+        val game = h.game
         if (game == null) {
             Text(
                 "Mimir",
@@ -75,9 +90,9 @@ fun HeroOverlay(
             )
         } else {
             Column(Modifier.align(Alignment.BottomStart).padding(20.dp)) {
-                if (hero.logoUrl != null) {
+                if (h.logoUrl != null) {
                     AsyncImage(
-                        model = hero.logoUrl,
+                        model = h.logoUrl,
                         contentDescription = game.title,
                         modifier = Modifier.heightIn(max = 64.dp).widthIn(max = 280.dp),
                         contentScale = ContentScale.Fit,
@@ -94,12 +109,13 @@ fun HeroOverlay(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     GlassPill(platformName(game.platformId))
                     GlassPill("▶ ${emulatorName(game)}")
-                    hero.lastPlayedAt?.let {
+                    h.lastPlayedAt?.let {
                         GlassPill("Last played ${DateFormat.getDateInstance(DateFormat.SHORT).format(Date(it))}")
                     }
                 }
             }
         }
+    }
     }
 }
 
