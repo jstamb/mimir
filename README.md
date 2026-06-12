@@ -13,8 +13,16 @@ whatever game you're looking at.
 can never be abandoned, because the code is yours too.*
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+![Status](https://img.shields.io/badge/status-BETA-orange)
 ![Version](https://img.shields.io/badge/version-1.0.0--beta1-8A2BE2)
 ![Platform](https://img.shields.io/badge/Android-10%2B-3DDC84)
+
+> ### 🚧 Beta testing in progress
+> Mimir is in **active beta**. Everything below works today on any single-screen
+> Android device (phones, Odin, Retroid…). The dual-screen deck for the AYN Thor is
+> built but **awaiting validation on real hardware (ETA July 2026)** — until then,
+> consider Thor dual-screen support *coming, not shipped*. Found a bug?
+> [Open an issue](../../issues) — beta feedback shapes 1.0.
 
 <img src="assets/home.png" width="260" alt="Home — continue playing shelf"> <img src="assets/browse.png" width="260" alt="Browse — hero canvas and system tabs"> <img src="assets/library.png" width="260" alt="Library with scraped boxart">
 
