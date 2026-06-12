@@ -3,10 +3,11 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M5a-2 — full art pipeline.** Local folder art auto-pickup (drop a
-PNG next to your ROM), SteamGridDB heroes/logos/grids with your own free API
-key, ES-DE import, libretro-thumbnails — sources layered by priority
-(yours > ES-DE > SGDB > libretro). Next: the new shell (M5a-3).
+**Status: M5a-3a — the new shell, part 1.** Hero showcase (SGDB hero art +
+logo + glass metadata) over a scalable browse: system tabs, search, grid/list
+toggle, alphabet rail for big libraries, select-to-focus with ambient color
+following your selection. Next: home shelf, sound + haptics (M5a-3b), then the
+dual-screen deck on Thor hardware (M5b).
 
 ## Why another launcher?
 
