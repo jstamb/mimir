@@ -8,12 +8,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -113,38 +113,110 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                         OutlinedButton(onClick = onPickFolder) { Text("Change folder") }
                     }
                 }
-                is UiState.Library -> when {
-                    showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
-                    showSettings -> {
-                        val installed = remember { viewModel.installedSnapshot() }
-                        val players by viewModel.playersState.collectAsState()
-                        EmulatorSettingsScreen(
-                            platforms = viewModel.platformsForSettings(),
-                            claimants = viewModel.claimantsByPlatform(),
-                            prefs = prefs,
-                            customPlayers = players.filter { it.id.startsWith("custom-") },
-                            launchableApps = viewModel::launchableApps,
-                            onAddCustom = viewModel::addCustomPlayer,
-                            onDeleteCustom = viewModel::deleteCustomPlayer,
-                            isInstalled = { it.packageName in installed },
-                            onSetDefault = viewModel::setPlatformDefault,
-                            sgdbKey = viewModel.sgdbApiKey(),
-                            onSaveSgdbKey = viewModel::setSgdbApiKey,
-                            onFetchSgdb = viewModel::fetchSgdbArt,
-                            onBack = { showSettings = false },
-                        )
+                is UiState.Library -> {
+                    val heroState by viewModel.heroArt.collectAsState()
+                    val selectedUri by viewModel.selectedUriState.collectAsState()
+                    Column(Modifier.fillMaxSize()) {
+                        Box(Modifier.weight(0.4f).fillMaxWidth()) {
+                            HeroPane(
+                                hero = heroState,
+                                platformName = viewModel::platformName,
+                                emulatorName = viewModel::resolvedEmulatorName,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            Row(Modifier.align(Alignment.TopEnd).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                TextButton(onClick = { showSettings = true }) { Text("⚙") }
+                                Box {
+                                    var menuOpen by remember { mutableStateOf(false) }
+                                    TextButton(onClick = { menuOpen = true }) { Text("⋮") }
+                                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                        DropdownMenuItem(
+                                            text = { Text("Rescan") },
+                                            enabled = !s.scanning,
+                                            onClick = { menuOpen = false; viewModel.rescan() },
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    if (s.scraping == null) "Fetch artwork"
+                                                    else "Artwork ${s.scraping.done}/${s.scraping.total}"
+                                                )
+                                            },
+                                            enabled = s.scraping == null,
+                                            onClick = { menuOpen = false; viewModel.fetchArtwork() },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Import ES-DE") },
+                                            onClick = { menuOpen = false; onImportEsde() },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Scan report (${s.skippedCount} skipped)") },
+                                            onClick = { menuOpen = false; showReport = true },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Change ROM folder") },
+                                            onClick = { menuOpen = false; onPickFolder() },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Box(Modifier.weight(0.6f).fillMaxWidth()) {
+                            when {
+                                showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
+                                showSettings -> {
+                                    val installed = remember { viewModel.installedSnapshot() }
+                                    val players by viewModel.playersState.collectAsState()
+                                    EmulatorSettingsScreen(
+                                        platforms = viewModel.platformsForSettings(),
+                                        claimants = viewModel.claimantsByPlatform(),
+                                        prefs = prefs,
+                                        customPlayers = players.filter { it.id.startsWith("custom-") },
+                                        launchableApps = viewModel::launchableApps,
+                                        onAddCustom = viewModel::addCustomPlayer,
+                                        onDeleteCustom = viewModel::deleteCustomPlayer,
+                                        isInstalled = { it.packageName in installed },
+                                        onSetDefault = viewModel::setPlatformDefault,
+                                        sgdbKey = viewModel.sgdbApiKey(),
+                                        onSaveSgdbKey = viewModel::setSgdbApiKey,
+                                        onFetchSgdb = viewModel::fetchSgdbArt,
+                                        onBack = { showSettings = false },
+                                    )
+                                }
+                                else -> Column(Modifier.fillMaxSize()) {
+                                    if (s.scanning) {
+                                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                                    }
+                                    if (s.banner != null) {
+                                        Surface(
+                                            color = MaterialTheme.colorScheme.errorContainer,
+                                            shape = MaterialTheme.shapes.small,
+                                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                                        ) {
+                                            Row(
+                                                Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Text(
+                                                    s.banner,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                                    modifier = Modifier.weight(1f),
+                                                )
+                                                TextButton(onClick = viewModel::rescan) { Text("Retry") }
+                                            }
+                                        }
+                                    }
+                                    BrowseScreen(
+                                        library = s,
+                                        selectedUri = selectedUri,
+                                        onGameTap = viewModel::onGameTapped,
+                                        onGameLongPress = { sheetGame = it },
+                                    )
+                                }
+                            }
+                        }
                     }
-                    else -> LibraryGrid(
-                        s,
-                        onGameClick = { viewModel.launchGame(it) },
-                        onGameLongClick = { sheetGame = it },
-                        onRescan = viewModel::rescan,
-                        onPickFolder = onPickFolder,
-                        onShowReport = { showReport = true },
-                        onShowSettings = { showSettings = true },
-                        onFetchArtwork = viewModel::fetchArtwork,
-                        onImportEsde = onImportEsde,
-                    )
                 }
             }
             sheetGame?.let { game ->
@@ -210,99 +282,17 @@ private fun BoxScope.CenteredColumn(content: @Composable ColumnScope.() -> Unit)
     )
 }
 
-@Composable
-fun LibraryGrid(
-    library: UiState.Library,
-    onGameClick: (GameEntity) -> Unit,
-    onGameLongClick: (GameEntity) -> Unit,
-    onRescan: () -> Unit,
-    onPickFolder: () -> Unit,
-    onShowReport: () -> Unit,
-    onShowSettings: () -> Unit,
-    onFetchArtwork: () -> Unit,
-    onImportEsde: () -> Unit,
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 140.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "${library.gamesByPlatform.values.sumOf { it.size }} games",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = onFetchArtwork, enabled = library.scraping == null) {
-                        Text(if (library.scraping == null) "Fetch artwork" else "Artwork ${library.scraping.done}/${library.scraping.total}")
-                    }
-                    TextButton(onClick = onImportEsde) { Text("Import ES-DE") }
-                    TextButton(onClick = onShowSettings) { Text("Emulators") }
-                    TextButton(onClick = onRescan, enabled = !library.scanning) { Text("Rescan") }
-                    TextButton(onClick = onPickFolder) { Text("Change folder") }
-                }
-                if (library.scanning) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 4.dp))
-                }
-                if (library.banner != null) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                library.banner,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.weight(1f),
-                            )
-                            TextButton(onClick = onRescan) { Text("Retry") }
-                        }
-                    }
-                }
-            }
-        }
-        library.gamesByPlatform.forEach { (platformName, games) ->
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Column(Modifier.padding(top = 8.dp)) {
-                    Text(platformName, style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "${games.size} ${if (games.size == 1) "game" else "games"}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            items(games, key = { it.uri }) { game ->
-                GameCard(
-                    game,
-                    artUrl = library.art[game.uri],
-                    onClick = { onGameClick(game) },
-                    onLongClick = { onGameLongClick(game) },
-                )
-            }
-        }
-        if (library.skippedCount > 0) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                TextButton(onClick = onShowReport) {
-                    Text("${library.skippedCount} files skipped — view scan report")
-                }
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GameCard(game: GameEntity, artUrl: String?, onClick: () -> Unit, onLongClick: () -> Unit) {
-    Card(Modifier.height(180.dp).combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
+fun GameCard(game: GameEntity, artUrl: String?, selected: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
+    val shape = CardDefaults.shape
+    Card(
+        Modifier
+            .height(180.dp)
+            .then(if (selected) Modifier.border(2.dp, LocalMimirTheme.current.primary, shape) else Modifier)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        shape = shape,
+    ) {
         Box(Modifier.fillMaxSize()) {
             if (artUrl != null) {
                 AsyncImage(

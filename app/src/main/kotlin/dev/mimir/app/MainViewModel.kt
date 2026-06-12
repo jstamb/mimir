@@ -31,6 +31,7 @@ import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
 import dev.mimir.scanner.WalkEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -75,15 +76,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val themeConfig: StateFlow<ThemeConfig> =
         themeStore.config.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeConfig())
 
-    /** Ambient palette follows the most recently played game's boxart (M5a-3 will follow browse focus). */
+    private val selectedGameUri = MutableStateFlow<String?>(null)
+    val selectedUriState: StateFlow<String?> = selectedGameUri
+
+    fun selectGame(game: GameEntity) { selectedGameUri.value = game.uri }
+
+    /** Tap behavior: first tap selects, second tap on the same game launches. */
+    fun onGameTapped(game: GameEntity) {
+        if (selectedGameUri.value == game.uri) launchGame(game) else selectGame(game)
+    }
+
+    /** uri of the game driving the hero pane: selected, else most recently played. */
+    private val focusUri: Flow<String?> =
+        combine(selectedGameUri, repo.playStates) { selected, plays ->
+            selected ?: plays.maxByOrNull { it.lastPlayedAt }?.gameUri
+        }
+
+    data class HeroArt(val game: GameEntity?, val heroUrl: String?, val logoUrl: String?, val boxartUrl: String?, val lastPlayedAt: Long?)
+
+    val heroArt: StateFlow<HeroArt> =
+        combine(focusUri, repo.games, repo.media, repo.playStates) { uri, games, media, plays ->
+            val game = games.firstOrNull { it.uri == uri }
+            HeroArt(
+                game = game,
+                heroUrl = media.firstOrNull { it.gameUri == uri && it.kind == "hero" }?.boxartUrl,
+                logoUrl = media.firstOrNull { it.gameUri == uri && it.kind == "logo" }?.boxartUrl,
+                boxartUrl = media.firstOrNull { it.gameUri == uri && it.kind == "boxart" }?.boxartUrl,
+                lastPlayedAt = plays.firstOrNull { it.gameUri == uri }?.lastPlayedAt,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, HeroArt(null, null, null, null, null))
+
+    /** Ambient palette follows the focused (selected, else last-played) game's hero/boxart. */
     val ambient: StateFlow<AmbientPalette> =
-        combine(repo.playStates, repo.media) { plays, media ->
-            val recentUri = plays.maxByOrNull { it.lastPlayedAt }?.gameUri
-            media.firstOrNull { it.gameUri == recentUri && it.kind == "boxart" }?.boxartUrl
-        }.map { artUri ->
+        heroArt.map { hero ->
             if (themeConfig.value.paletteMode == PaletteMode.FIXED)
                 AmbientPalette.from(themeConfig.value.fixedSeedArgb)
-            else paletteExtractor.extract(artUri)
+            else paletteExtractor.extract(hero.heroUrl ?: hero.boxartUrl)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, AmbientPalette.from(AmbientPalette.FALLBACK_ARGB))
 
     val playersState: StateFlow<List<PlayerDef>> =
@@ -102,6 +130,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val prefsState: StateFlow<PlayerPrefs> =
         playerPrefs.stateIn(viewModelScope, SharingStarted.Eagerly, PlayerPrefs())
+
+    /** Resolved emulator name for the hero pane pills. */
+    fun resolvedEmulatorName(game: GameEntity): String =
+        resolver(prefsState.value).resolve(game.uri, game.platformId)?.name ?: "none"
+
+    fun platformName(id: String): String = platformNames[id] ?: id
 
     /** platformId -> claimant players, for the settings screen. */
     fun claimantsByPlatform(): Map<String, List<PlayerDef>> =
