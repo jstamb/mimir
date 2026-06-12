@@ -25,6 +25,8 @@ import dev.mimir.theme.AmbientPalette
 import dev.mimir.theme.PaletteMode
 import dev.mimir.theme.ThemeConfig
 import dev.mimir.scraper.EsdeImportMatcher
+import dev.mimir.scraper.FolderArtMatcher
+import dev.mimir.scraper.SgdbClient
 import dev.mimir.scanner.PlatformDefs
 import dev.mimir.scanner.TreeAccessException
 import dev.mimir.scanner.WalkEngine
@@ -158,6 +160,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val artScraper = ArtScraper(repo, platforms)
     private val scrapeProgress = MutableStateFlow<ArtScraper.Progress?>(null)
+    private val sgdbProgress = MutableStateFlow<ArtScraper.Progress?>(null)
 
     private val treeUri = MutableStateFlow(prefs.getString("treeUri", null)?.let(Uri::parse))
     private val scanning = MutableStateFlow(false)
@@ -213,9 +216,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val result = withContext(Dispatchers.IO) {
                     val source = DocumentsTreeSource(getApplication<Application>().contentResolver, uri)
-                    matcher.match(WalkEngine.walk(source, source.rootUri))
+                    val files = WalkEngine.walk(source, source.rootUri)
+                    val scan = matcher.match(files)
+                    scan to FolderArtMatcher.match(files, scan.games)
                 }
-                repo.applyScan(result)
+                repo.applyScan(result.first)
+                repo.saveArt(result.second.map { (gameUri, artUri) -> MediaEntity(gameUri, artUri, "boxart", "folder") })
                 fetchArtwork()
             } catch (e: TreeAccessException) {
                 error.value = "Can't read the ROM folder (${e.message}). Pick it again or check the storage."
@@ -235,6 +241,52 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 artScraper.scrapeMissing { scrapeProgress.value = it }
             } finally {
                 scrapeProgress.value = null
+            }
+        }
+    }
+
+    fun sgdbApiKey(): String = prefs.getString("sgdbApiKey", "") ?: ""
+    fun setSgdbApiKey(key: String) { prefs.edit { putString("sgdbApiKey", key.trim()) } }
+
+    fun fetchSgdbArt() {
+        val key = sgdbApiKey()
+        if (key.isBlank()) {
+            _message.value = "Add your SteamGridDB API key first (it's free — steamgriddb.com/profile/preferences/api)"
+            return
+        }
+        if (sgdbProgress.value != null) return // already running
+        sgdbProgress.value = ArtScraper.Progress(0, 0)
+        viewModelScope.launch {
+            try {
+                val count = withContext(Dispatchers.IO) {
+                    val http = okhttp3.OkHttpClient()
+                    val client = SgdbClient(key) { url, headers ->
+                        runCatching {
+                            val req = okhttp3.Request.Builder().url(url)
+                                .apply { headers.forEach { (k, v) -> addHeader(k, v) } }.build()
+                            http.newCall(req).execute().use { if (it.isSuccessful) it.body?.string() else null }
+                        }.getOrNull()
+                    }
+                    var saved = 0
+                    val games = repo.games.first()
+                    val media = repo.mediaSnapshot()
+                    val missingHero = games.filter { g -> media.none { it.gameUri == g.uri && it.kind == "hero" } }
+                    for ((i, game) in missingHero.withIndex()) {
+                        sgdbProgress.value = ArtScraper.Progress(i, missingHero.size)
+                        val art = client.artFor(game.title) ?: continue
+                        val items = buildList {
+                            art.heroUrl?.let { add(MediaEntity(game.uri, it, "hero", "sgdb")) }
+                            art.logoUrl?.let { add(MediaEntity(game.uri, it, "logo", "sgdb")) }
+                            art.gridUrl?.let { add(MediaEntity(game.uri, it, "boxart", "sgdb")) }
+                        }
+                        repo.saveArt(items)
+                        saved += items.size
+                    }
+                    saved
+                }
+                _message.value = "SteamGridDB: saved $count art items"
+            } finally {
+                sgdbProgress.value = null
             }
         }
     }

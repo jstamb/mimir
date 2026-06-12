@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import dev.mimir.launcher.PlayerDef
 import dev.mimir.launcher.PlayerPrefs
@@ -24,6 +25,9 @@ fun EmulatorSettingsScreen(
     onDeleteCustom: (String) -> Unit,
     isInstalled: (PlayerDef) -> Boolean,
     onSetDefault: (platformId: String, playerId: String) -> Unit,
+    sgdbKey: String,
+    onSaveSgdbKey: (String) -> Unit,
+    onFetchSgdb: () -> Unit,
     onBack: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -87,6 +91,53 @@ fun EmulatorSettingsScreen(
                         onAdd = { name, pkg, ids -> onAddCustom(name, pkg, ids); showAdd = false },
                         onDismiss = { showAdd = false },
                     )
+                }
+            }
+            item {
+                ArtSourcesSection(
+                    sgdbKey = sgdbKey,
+                    onSaveSgdbKey = onSaveSgdbKey,
+                    onFetchSgdb = onFetchSgdb,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArtSourcesSection(
+    sgdbKey: String,
+    onSaveSgdbKey: (String) -> Unit,
+    onFetchSgdb: () -> Unit,
+) {
+    var keyInput by remember { mutableStateOf(sgdbKey) }
+    Column(Modifier.padding(top = 16.dp)) {
+        Text("Art sources", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "SteamGridDB adds heroes, logos and extra boxart. Get a free key at steamgriddb.com.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Card {
+            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                OutlinedTextField(
+                    value = keyInput,
+                    onValueChange = { keyInput = it },
+                    label = { Text("SteamGridDB API key") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = { onSaveSgdbKey(keyInput) }) { Text("Save") }
+                    Spacer(Modifier.weight(1f))
+                    Button(onClick = onFetchSgdb, enabled = keyInput.isNotBlank()) {
+                        Text("Fetch heroes & logos")
+                    }
                 }
             }
         }

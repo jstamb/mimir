@@ -128,6 +128,9 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                             onDeleteCustom = viewModel::deleteCustomPlayer,
                             isInstalled = { it.packageName in installed },
                             onSetDefault = viewModel::setPlatformDefault,
+                            sgdbKey = viewModel.sgdbApiKey(),
+                            onSaveSgdbKey = viewModel::setSgdbApiKey,
+                            onFetchSgdb = viewModel::fetchSgdbArt,
                             onBack = { showSettings = false },
                         )
                     }

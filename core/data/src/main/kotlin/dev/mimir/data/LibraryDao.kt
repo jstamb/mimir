@@ -34,6 +34,9 @@ interface LibraryDao {
     @Query("SELECT * FROM media")
     fun media(): Flow<List<MediaEntity>>
 
+    @Query("SELECT * FROM media")
+    suspend fun mediaOnce(): List<MediaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedia(items: List<MediaEntity>)
 

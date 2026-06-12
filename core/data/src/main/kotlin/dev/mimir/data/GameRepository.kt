@@ -24,6 +24,8 @@ class GameRepository(private val dao: LibraryDao) {
 
     suspend fun gamesWithoutArt(): List<GameEntity> = dao.gamesWithoutArt()
 
+    suspend fun mediaSnapshot(): List<MediaEntity> = dao.mediaOnce()
+
     suspend fun saveArt(items: List<MediaEntity>) {
         val accepted = items.filter { item ->
             val existing = dao.mediaFor(item.gameUri, item.kind)
