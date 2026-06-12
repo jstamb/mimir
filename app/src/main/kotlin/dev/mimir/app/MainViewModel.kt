@@ -114,6 +114,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             else paletteExtractor.extract(hero.heroUrl ?: hero.boxartUrl)
         }.stateIn(viewModelScope, SharingStarted.Eagerly, AmbientPalette.from(AmbientPalette.FALLBACK_ARGB))
 
+    data class RecentEntry(val game: GameEntity, val artUrl: String?, val lastPlayedAt: Long)
+
+    val recents: StateFlow<List<RecentEntry>> =
+        combine(repo.playStates, repo.games, repo.media) { plays, games, media ->
+            plays.sortedByDescending { it.lastPlayedAt }
+                .mapNotNull { play ->
+                    games.firstOrNull { it.uri == play.gameUri }?.let { game ->
+                        RecentEntry(
+                            game = game,
+                            artUrl = media.firstOrNull { it.gameUri == game.uri && it.kind == "boxart" }?.boxartUrl,
+                            lastPlayedAt = play.lastPlayedAt,
+                        )
+                    }
+                }
+                .take(8)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** System display names with counts for the home system row, sorted. */
+    fun systemRow(library: UiState.Library): List<Pair<String, Int>> =
+        library.gamesByPlatform.map { (name, games) -> name to games.size }
+
     val playersState: StateFlow<List<PlayerDef>> =
         repo.customPlayers.map { custom -> mergePlayers(bundledPlayers, custom.map { it.toPlayerDef() }) }
             .stateIn(viewModelScope, SharingStarted.Eagerly, bundledPlayers)

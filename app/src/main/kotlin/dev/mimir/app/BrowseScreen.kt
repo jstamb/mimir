@@ -28,9 +28,11 @@ fun BrowseScreen(
     selectedUri: String?,
     onGameTap: (GameEntity) -> Unit,
     onGameLongPress: (GameEntity) -> Unit,
+    initialSystem: String? = null,
+    onSystemChange: () -> Unit = {},
 ) {
     val systems = library.gamesByPlatform.keys.toList()
-    var activeSystem by rememberSaveable(systems) { mutableStateOf(systems.firstOrNull() ?: "") }
+    var activeSystem by rememberSaveable(systems) { mutableStateOf(initialSystem ?: systems.firstOrNull() ?: "") }
     var listMode by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     val theme = LocalMimirTheme.current
@@ -55,7 +57,9 @@ fun BrowseScreen(
                         color = if (on) theme.glow else Color.White.copy(alpha = 0.05f),
                         contentColor = if (on) Color.White else Color.White.copy(alpha = 0.6f),
                         shape = MaterialTheme.shapes.extraLarge,
-                        modifier = Modifier.clickable { activeSystem = system },
+                        modifier = Modifier.clickable {
+                            if (system != activeSystem) { activeSystem = system; onSystemChange() }
+                        },
                     ) {
                         Text(
                             "$system  ·  ${library.gamesByPlatform[system].orEmpty().size}",

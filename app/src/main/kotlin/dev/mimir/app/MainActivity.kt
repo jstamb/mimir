@@ -3,6 +3,7 @@ package dev.mimir.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -30,6 +31,8 @@ import dev.mimir.data.SkippedFileEntity
 import dev.mimir.launcher.PlayerDef
 import dev.mimir.theme.LocalMimirTheme
 import dev.mimir.theme.MimirTheme
+
+enum class Route { HOME, BROWSE, SETTINGS, REPORT }
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -80,10 +83,14 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
     val message by viewModel.message.collectAsState()
     val skipped by viewModel.skipped.collectAsState()
     val snackbar = remember { SnackbarHostState() }
-    var showReport by rememberSaveable { mutableStateOf(false) }
-    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var route by rememberSaveable { mutableStateOf(Route.HOME) }
+    var browseSystem by rememberSaveable { mutableStateOf<String?>(null) }
     var sheetGame by remember { mutableStateOf<GameEntity?>(null) }
     val prefs by viewModel.prefsState.collectAsState()
+
+    BackHandler(enabled = route != Route.HOME) {
+        route = if (route == Route.BROWSE) Route.HOME else Route.BROWSE
+    }
 
     LaunchedEffect(message) {
         message?.let { snackbar.showSnackbar(it); viewModel.consumeMessage() }
@@ -125,7 +132,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                 modifier = Modifier.fillMaxSize(),
                             )
                             Row(Modifier.align(Alignment.TopEnd).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                TextButton(onClick = { showSettings = true }) { Text("⚙") }
+                                TextButton(onClick = { route = Route.SETTINGS }) { Text("⚙") }
                                 Box {
                                     var menuOpen by remember { mutableStateOf(false) }
                                     TextButton(onClick = { menuOpen = true }) { Text("⋮") }
@@ -151,7 +158,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                         )
                                         DropdownMenuItem(
                                             text = { Text("Scan report (${s.skippedCount} skipped)") },
-                                            onClick = { menuOpen = false; showReport = true },
+                                            onClick = { menuOpen = false; route = Route.REPORT },
                                         )
                                         DropdownMenuItem(
                                             text = { Text("Change ROM folder") },
@@ -162,9 +169,20 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                             }
                         }
                         Box(Modifier.weight(0.6f).fillMaxWidth()) {
-                            when {
-                                showReport -> ScanReportScreen(skipped, onBack = { showReport = false })
-                                showSettings -> {
+                            when (route) {
+                                Route.HOME -> {
+                                    val recents by viewModel.recents.collectAsState()
+                                    HomeScreen(
+                                        recents = recents,
+                                        systems = viewModel.systemRow(s),
+                                        onPlay = viewModel::launchGame,
+                                        onGameLongPress = { sheetGame = it },
+                                        onOpenSystem = { browseSystem = it; route = Route.BROWSE },
+                                        onBrowseAll = { browseSystem = null; route = Route.BROWSE },
+                                    )
+                                }
+                                Route.REPORT -> ScanReportScreen(skipped, onBack = { route = Route.BROWSE })
+                                Route.SETTINGS -> {
                                     val installed = remember { viewModel.installedSnapshot() }
                                     val players by viewModel.playersState.collectAsState()
                                     EmulatorSettingsScreen(
@@ -180,10 +198,10 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                         sgdbKey = viewModel.sgdbApiKey(),
                                         onSaveSgdbKey = viewModel::setSgdbApiKey,
                                         onFetchSgdb = viewModel::fetchSgdbArt,
-                                        onBack = { showSettings = false },
+                                        onBack = { route = Route.BROWSE },
                                     )
                                 }
-                                else -> Column(Modifier.fillMaxSize()) {
+                                Route.BROWSE -> Column(Modifier.fillMaxSize()) {
                                     if (s.scanning) {
                                         LinearProgressIndicator(Modifier.fillMaxWidth())
                                     }
@@ -212,6 +230,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                         selectedUri = selectedUri,
                                         onGameTap = viewModel::onGameTapped,
                                         onGameLongPress = { sheetGame = it },
+                                        initialSystem = browseSystem,
                                     )
                                 }
                             }
