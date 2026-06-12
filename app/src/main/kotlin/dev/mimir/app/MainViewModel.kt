@@ -151,7 +151,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private data class Status(val scanning: Boolean, val error: String?, val scraping: ArtScraper.Progress?)
 
     private val libraryData = combine(repo.games, repo.media) { games, media ->
-        LibraryData(games, media.associate { it.gameUri to it.boxartUrl })
+        LibraryData(games, media.filter { it.kind == "boxart" }.associate { it.gameUri to it.boxartUrl })
     }
     private val status = combine(scanning, error, scrapeProgress) { scan, err, scrape ->
         Status(scan, err, scrape)
@@ -231,7 +231,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         platforms = platforms,
                     )
                 }
-                repo.saveArt(result.covers.map { (gameUri, imageUri) -> MediaEntity(gameUri, imageUri) })
+                repo.saveArt(result.covers.map { (gameUri, imageUri) -> MediaEntity(gameUri, imageUri, source = "esde") })
                 _message.value = buildString {
                     append("Imported ${result.covers.size} covers from ES-DE")
                     if (result.videoCount > 0) append(" — ${result.videoCount} videos found (video support comes with theming)")
@@ -255,7 +255,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val spec = buildIntentSpec(player, romUri = game.uri, title = game.title)
         when (val result = LaunchController.launch(getApplication(), spec)) {
             is LaunchResult.Failure -> _message.value = result.reason
-            LaunchResult.Success -> Unit
+            LaunchResult.Success -> viewModelScope.launch { repo.stampPlayed(game.uri, System.currentTimeMillis()) }
         }
     }
 

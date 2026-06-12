@@ -21,6 +21,7 @@ data class SkippedFileEntity(
 
 @Entity(
     tableName = "media",
+    primaryKeys = ["gameUri", "kind"],
     foreignKeys = [
         ForeignKey(
             entity = GameEntity::class,
@@ -31,8 +32,26 @@ data class SkippedFileEntity(
     ],
 )
 data class MediaEntity(
+    val gameUri: String,
+    val boxartUrl: String,   // image uri for this kind (name kept for compatibility; semantically "url")
+    val kind: String = "boxart",     // boxart | hero | logo
+    val source: String = "libretro", // folder | esde | sgdb | libretro
+)
+
+@Entity(
+    tableName = "play_state",
+    foreignKeys = [
+        ForeignKey(
+            entity = GameEntity::class,
+            parentColumns = ["uri"],
+            childColumns = ["gameUri"],
+            onDelete = ForeignKey.CASCADE,
+        )
+    ],
+)
+data class PlayStateEntity(
     @PrimaryKey val gameUri: String,
-    val boxartUrl: String,
+    val lastPlayedAt: Long,
 )
 
 @Entity(tableName = "platform_prefs")

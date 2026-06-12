@@ -37,7 +37,22 @@ interface LibraryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedia(items: List<MediaEntity>)
 
-    @Query("SELECT g.* FROM games g LEFT JOIN media m ON g.uri = m.gameUri WHERE m.gameUri IS NULL")
+    @Query("SELECT * FROM media WHERE gameUri = :gameUri AND kind = :kind")
+    suspend fun mediaFor(gameUri: String, kind: String): MediaEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertPlayState(state: PlayStateEntity)
+
+    @Query(
+        "SELECT g.* FROM games g INNER JOIN play_state p ON g.uri = p.gameUri " +
+            "ORDER BY p.lastPlayedAt DESC LIMIT :limit"
+    )
+    suspend fun recentGames(limit: Int): List<GameEntity>
+
+    @Query("SELECT * FROM play_state")
+    fun playStates(): Flow<List<PlayStateEntity>>
+
+    @Query("SELECT g.* FROM games g LEFT JOIN media m ON g.uri = m.gameUri AND m.kind = 'boxart' WHERE m.gameUri IS NULL")
     suspend fun gamesWithoutArt(): List<GameEntity>
 
     @Query("SELECT * FROM platform_prefs")

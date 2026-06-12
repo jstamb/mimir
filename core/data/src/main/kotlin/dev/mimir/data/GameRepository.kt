@@ -25,8 +25,16 @@ class GameRepository(private val dao: LibraryDao) {
     suspend fun gamesWithoutArt(): List<GameEntity> = dao.gamesWithoutArt()
 
     suspend fun saveArt(items: List<MediaEntity>) {
-        if (items.isNotEmpty()) dao.insertMedia(items)
+        val accepted = items.filter { item ->
+            val existing = dao.mediaFor(item.gameUri, item.kind)
+            existing == null || ArtPriority.canReplace(existing.source, item.source)
+        }
+        if (accepted.isNotEmpty()) dao.insertMedia(accepted)
     }
+
+    val playStates: Flow<List<PlayStateEntity>> = dao.playStates()
+    suspend fun stampPlayed(uri: String, at: Long) = dao.upsertPlayState(PlayStateEntity(uri, at))
+    suspend fun recentGames(limit: Int = 8): List<GameEntity> = dao.recentGames(limit)
 
     suspend fun applyScan(result: ScanResult) {
         val change = DiffEngine.diff(dao.gamesOnce(), result.games)

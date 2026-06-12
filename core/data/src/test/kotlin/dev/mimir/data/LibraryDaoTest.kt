@@ -112,4 +112,21 @@ class LibraryDaoTest {
         dao.deleteCustomPlayer("custom-com.example.emu")
         assertEquals(emptyList<CustomPlayerEntity>(), dao.customPlayers().first())
     }
+
+    @Test
+    fun `art priority enforced on save and recents ordered by lastPlayedAt`() = runBlocking {
+        val dao = db().libraryDao()
+        val repo = GameRepository(dao)
+        dao.upsertGames(listOf(
+            GameEntity("uri-a", "A", "n64", "n64/a.z64", 1),
+            GameEntity("uri-b", "B", "n64", "n64/b.z64", 1),
+        ))
+        repo.saveArt(listOf(MediaEntity("uri-a", "u-libretro", "boxart", "libretro")))
+        repo.saveArt(listOf(MediaEntity("uri-a", "u-folder", "boxart", "folder")))
+        repo.saveArt(listOf(MediaEntity("uri-a", "u-sgdb", "boxart", "sgdb"))) // must NOT downgrade folder
+        assertEquals("u-folder", dao.media().first().single { it.gameUri == "uri-a" && it.kind == "boxart" }.boxartUrl)
+
+        dao.upsertPlayState(PlayStateEntity("uri-b", 2000)); dao.upsertPlayState(PlayStateEntity("uri-a", 1000))
+        assertEquals(listOf("uri-b", "uri-a"), dao.recentGames(8).map { it.uri })
+    }
 }

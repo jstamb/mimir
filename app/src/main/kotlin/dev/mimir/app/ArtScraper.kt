@@ -39,7 +39,7 @@ class ArtScraper(
                 val matcher = ArtMatcher(listing)
                 val found = games.mapNotNull { game ->
                     matcher.bestMatch(game.title)?.let { file ->
-                        MediaEntity(game.uri, LibretroNames.imageUrl(libretroName, file))
+                        MediaEntity(game.uri, LibretroNames.imageUrl(libretroName, file), source = "libretro")
                     }
                 }
                 repo.saveArt(found)

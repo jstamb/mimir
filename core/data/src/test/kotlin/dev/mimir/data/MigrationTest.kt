@@ -45,4 +45,22 @@ class MigrationTest {
         }
         db.query("SELECT COUNT(*) FROM custom_players").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
     }
+
+    @Test
+    fun `migrate 4 to 5 backfills media kind-source and adds lastPlayedAt`() {
+        helper.createDatabase("migration-test-5", 4).apply {
+            execSQL(
+                "INSERT INTO games (uri, title, platformId, relativePath, lastModified) " +
+                    "VALUES ('uri-m', 'Mario Kart 64', 'n64', 'n64/mk64.z64', 10)"
+            )
+            execSQL("INSERT INTO media (gameUri, boxartUrl) VALUES ('uri-m', 'https://x/mk64.png')")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate("migration-test-5", 5, true, MIGRATION_4_5)
+        db.query("SELECT kind, source, boxartUrl FROM media WHERE gameUri='uri-m'").use { c ->
+            c.moveToFirst()
+            assertEquals("boxart", c.getString(0)); assertEquals("libretro", c.getString(1)); assertEquals("https://x/mk64.png", c.getString(2))
+        }
+        db.query("SELECT COUNT(*) FROM play_state").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+    }
 }
