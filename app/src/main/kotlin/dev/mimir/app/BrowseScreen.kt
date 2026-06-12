@@ -1,6 +1,5 @@
 package dev.mimir.app
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
@@ -88,16 +87,21 @@ fun BrowseScreen(
                         items(games, key = { it.uri }) { game ->
                             ListItem(
                                 headlineContent = { Text(game.title) },
-                                supportingContent = { Text(library.art[game.uri]?.let { "" } ?: "no art", style = MaterialTheme.typography.labelSmall) },
+                                supportingContent = if (library.art[game.uri] == null) {
+                                    { Text("no art", style = MaterialTheme.typography.labelSmall) }
+                                } else null,
                                 leadingContent = {
                                     coil3.compose.AsyncImage(
                                         model = library.art[game.uri], contentDescription = null,
                                         modifier = Modifier.size(width = 34.dp, height = 46.dp),
                                     )
                                 },
-                                modifier = Modifier
-                                    .clickable { onGameTap(game) }
-                                    .background(if (game.uri == selectedUri) theme.glow else Color.Transparent),
+                                // ListItem paints its own opaque container, so a Modifier.background
+                                // behind it is invisible — the highlight must be the containerColor.
+                                colors = ListItemDefaults.colors(
+                                    containerColor = if (game.uri == selectedUri) theme.glow else Color.Transparent,
+                                ),
+                                modifier = Modifier.clickable { onGameTap(game) },
                             )
                         }
                     }
@@ -135,7 +139,7 @@ fun BrowseScreen(
 @Composable
 private fun AlphaRail(sections: Map<String, Int>, onJump: (Int) -> Unit) {
     val theme = LocalMimirTheme.current
-    var railHeightPx by remember { mutableStateOf(1f) }
+    var railHeightPx by remember { mutableFloatStateOf(1f) }
     Column(
         Modifier
             .fillMaxHeight()
