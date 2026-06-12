@@ -3,10 +3,10 @@
 An open-source (GPLv3), dual-screen-first emulation frontend for Android gaming
 handhelds — built for the AYN Thor.
 
-**Status: M4a — ES-DE media import.** One tap imports covers from an existing
-ES-DE `downloaded_media` folder (videos are detected and counted; playback
-lands with theming). Open emulator model, boxart scraping, persistent library
-all in. Next: UI polish + theme system.
+**Status: M5a-1 — theme foundation.** Slotted theme config with per-slot pack
+mixing, ambient palette engine (UI tints from your last-played game's art),
+art sources with priority (folder > ES-DE > SteamGridDB > libretro), playtime
+stamping. The new shell screens land in M5a-3.
 
 ## Why another launcher?
 
