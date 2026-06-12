@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:theme"))
     implementation(project(":core:scraper"))
+    implementation(libs.haze) // glass is a shell concern — app-only, not core:theme
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.okhttp)

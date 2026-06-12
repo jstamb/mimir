@@ -43,6 +43,28 @@ fun HeroPane(
                 Brush.verticalGradient(0f to Color.Transparent, 0.55f to Color.Transparent, 1f to theme.scrim)
             )
         )
+        HeroOverlay(
+            hero = hero,
+            platformName = platformName,
+            emulatorName = emulatorName,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+/**
+ * Logo (or styled title) + glass metadata pills for the focused game, anchored to the
+ * overlay's bottom-start. Shared by [HeroPane] (M5b top display) and the single-screen
+ * layered layout in MainActivity, where it floats between the hero art and glass panel.
+ */
+@Composable
+fun HeroOverlay(
+    hero: MainViewModel.HeroArt,
+    platformName: (String) -> String,
+    emulatorName: (dev.mimir.data.GameEntity) -> String,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier) {
         val game = hero.game
         if (game == null) {
             Text(

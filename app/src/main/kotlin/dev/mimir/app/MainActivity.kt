@@ -7,6 +7,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,11 +22,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -28,6 +37,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import dev.mimir.data.GameEntity
 import dev.mimir.data.SkippedFileEntity
 import dev.mimir.launcher.PlayerDef
@@ -107,7 +121,12 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
         message?.let { snackbar.showSnackbar(it); viewModel.consumeMessage() }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
+    // Zero content insets: the hero art must run edge-to-edge behind the status bar.
+    // L2's top scrim provides status-bar protection; insets are re-applied where needed.
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { padding ->
         Box(
             Modifier
                 .fillMaxSize()
@@ -132,17 +151,49 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                     }
                 }
                 is UiState.Library -> {
+                    val theme = LocalMimirTheme.current
                     val heroState by viewModel.heroArt.collectAsState()
                     val selectedUri by viewModel.selectedUriState.collectAsState()
-                    Column(Modifier.fillMaxSize()) {
-                        Box(Modifier.weight(0.4f).fillMaxWidth()) {
-                            HeroPane(
-                                hero = heroState,
-                                platformName = viewModel::platformName,
-                                emulatorName = viewModel::resolvedEmulatorName,
-                                modifier = Modifier.fillMaxSize(),
+                    val hazeState = remember { HazeState() }
+                    val panelShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+                    Box(Modifier.fillMaxSize()) {
+                        // L1 — hero art fills the entire screen behind everything
+                        Crossfade(
+                            targetState = heroState.heroUrl ?: heroState.boxartUrl,
+                            animationSpec = tween(600),
+                            label = "heroArt",
+                        ) { art ->
+                            if (art != null) {
+                                AsyncImage(
+                                    model = art,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+                                )
+                            } else {
+                                Box(Modifier.fillMaxSize().background(theme.scrim).hazeSource(hazeState))
+                            }
+                        }
+                        // L2 — scrims: status-bar protection on top, fade toward theme scrim below
+                        Box(
+                            Modifier.fillMaxSize().background(
+                                Brush.verticalGradient(
+                                    0f to Color.Black.copy(alpha = 0.35f),
+                                    0.18f to Color.Transparent,
+                                    0.40f to Color.Transparent,
+                                    0.95f to theme.scrim,
+                                )
                             )
-                            Row(Modifier.align(Alignment.TopEnd).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                        )
+                        // L3 — logo + pills float just above the glass panel's top edge
+                        HeroOverlay(
+                            hero = heroState,
+                            platformName = viewModel::platformName,
+                            emulatorName = viewModel::resolvedEmulatorName,
+                            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().fillMaxHeight(0.38f),
+                        )
+                        // L5 — top-right controls (no overlap with the lower panel)
+                        Row(Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp)) {
                                 TextButton(onClick = { route = Route.SETTINGS }) { Text("⚙") }
                                 Box {
                                     var menuOpen by remember { mutableStateOf(false) }
@@ -182,9 +233,34 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                     }
                                 }
                             }
-                        }
-                        Box(Modifier.weight(0.6f).fillMaxWidth()) {
-                            when (route) {
+                        // L4 — glass content panel over the lower ~62%
+                        Box(
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.62f)
+                                .clip(panelShape)
+                                .hazeEffect(
+                                    hazeState,
+                                    style = HazeStyle(
+                                        backgroundColor = theme.scrim,
+                                        tints = listOf(
+                                            HazeTint(theme.scrim.copy(alpha = 0.55f)),
+                                            HazeTint(theme.glow),
+                                        ),
+                                        blurRadius = 24.dp,
+                                        noiseFactor = 0.02f,
+                                    ),
+                                ),
+                        ) {
+                            AnimatedContent(
+                                targetState = route,
+                                transitionSpec = {
+                                    (slideInVertically { it / 8 } + fadeIn(tween(250))) togetherWith fadeOut(tween(150))
+                                },
+                                label = "route",
+                            ) { r ->
+                            when (r) {
                                 Route.HOME -> {
                                     val recents by viewModel.recents.collectAsState()
                                     HomeScreen(
@@ -266,6 +342,7 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                         onSystemChange = { viewModel.play(SoundEngine.Cue.NAV) },
                                     )
                                 }
+                            }
                             }
                         }
                     }
