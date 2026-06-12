@@ -384,6 +384,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun exportBackup(out: java.io.OutputStream) {
+        viewModelScope.launch {
+            runCatching { withContext(Dispatchers.IO) { BackupWriter.write(out, repo, themeConfig.value) } }
+                .onSuccess { _message.value = "Backup saved — art, emulator choices, playtime, theme" }
+                .onFailure { _message.value = "Backup failed: ${it.message}" }
+        }
+    }
+
     fun launchGame(game: GameEntity, forced: PlayerDef? = null) {
         val player = forced ?: resolver(prefsState.value).resolve(game.uri, game.platformId)
         if (player == null) {

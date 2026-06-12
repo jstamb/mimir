@@ -61,6 +61,18 @@ interface LibraryDao {
     @Query("SELECT * FROM platform_prefs")
     fun platformPrefs(): Flow<List<PlatformPrefEntity>>
 
+    @Query("SELECT * FROM platform_prefs")
+    suspend fun platformPrefsOnce(): List<PlatformPrefEntity>
+
+    @Query("SELECT * FROM game_prefs")
+    suspend fun gamePrefsOnce(): List<GamePrefEntity>
+
+    @Query("SELECT * FROM custom_players")
+    suspend fun customPlayersOnce(): List<CustomPlayerEntity>
+
+    @Query("SELECT * FROM play_state")
+    suspend fun playStatesOnce(): List<PlayStateEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setPlatformPref(pref: PlatformPrefEntity)
 

@@ -25,6 +25,10 @@ class GameRepository(private val dao: LibraryDao) {
     suspend fun gamesWithoutArt(): List<GameEntity> = dao.gamesWithoutArt()
 
     suspend fun mediaSnapshot(): List<MediaEntity> = dao.mediaOnce()
+    suspend fun platformPrefsSnapshot(): List<PlatformPrefEntity> = dao.platformPrefsOnce()
+    suspend fun gamePrefsSnapshot(): List<GamePrefEntity> = dao.gamePrefsOnce()
+    suspend fun customPlayersSnapshot(): List<CustomPlayerEntity> = dao.customPlayersOnce()
+    suspend fun playStatesSnapshot(): List<PlayStateEntity> = dao.playStatesOnce()
 
     suspend fun saveArt(items: List<MediaEntity>) {
         val accepted = items.filter { item ->

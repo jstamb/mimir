@@ -61,6 +61,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val createBackup = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) contentResolver.openOutputStream(uri)?.let(viewModel::exportBackup)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -72,6 +78,7 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         onPickFolder = { pickFolder.launch(null) },
                         onImportEsde = { pickEsdeMedia.launch(null) },
+                        onBackup = { createBackup.launch("mimir-backup.zip") },
                     )
                 }
             }
@@ -80,7 +87,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde: () -> Unit) {
+fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde: () -> Unit, onBackup: () -> Unit) {
     val state by viewModel.state.collectAsState()
     val message by viewModel.message.collectAsState()
     val skipped by viewModel.skipped.collectAsState()
@@ -163,6 +170,10 @@ fun MainScreen(viewModel: MainViewModel, onPickFolder: () -> Unit, onImportEsde:
                                         DropdownMenuItem(
                                             text = { Text("Scan report (${s.skippedCount} skipped)") },
                                             onClick = { menuOpen = false; route = Route.REPORT },
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Back up art & themes") },
+                                            onClick = { menuOpen = false; onBackup() },
                                         )
                                         DropdownMenuItem(
                                             text = { Text("Change ROM folder") },

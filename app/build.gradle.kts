@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 android {
     namespace = "dev.mimir.app"
@@ -29,6 +30,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.okhttp)
+    implementation(libs.serialization.json)
     implementation(libs.coroutines.android)
     testImplementation(libs.junit)
     // kotlin("test") alone resolves the frameworkless variant under AGP's built-in Kotlin
