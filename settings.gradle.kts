@@ -19,6 +19,7 @@ rootProject.name = "mimir"
 include(":app")
 include(":core:scanner")
 include(":core:scraper")
+include(":core:theme")
 include(":core:launcher")
 include(":core:data")
 include(":tools:fake-emulator")
