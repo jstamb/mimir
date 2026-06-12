@@ -12,6 +12,8 @@ android {
 dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
+    // animateColorAsState/tween live in compose-animation; compose-ui alone doesn't expose them
+    implementation(libs.compose.animation)
     implementation(libs.serialization.json)
     implementation(libs.androidx.palette)
     implementation(libs.datastore.preferences)
