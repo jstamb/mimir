@@ -6,7 +6,7 @@
 
 **Interaction model (from the approved mockups):** tapping a game SELECTS it (HeroPane + ambient update, selection ring); tapping the selected game again LAUNCHES it; long-press keeps the Play-with sheet. Alphabet rail appears only when the active system has > 24 games; tab row appears when > 1 system.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.8.0-m5a2, 80 tests). JAVA_HOME export as always. Co-Authored-By trailer. Spec: docs/superpowers/specs/2026-06-11-m5-theme-system-design.md §3.3.
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.8.0-m5a2, 80 tests). JAVA_HOME export as always. Co-Authored-By trailer. Spec: docs/superpowers/specs/2026-06-11-m5-theme-system-design.md §3.3.
 
 ---
 

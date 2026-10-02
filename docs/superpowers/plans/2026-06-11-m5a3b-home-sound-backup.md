@@ -4,7 +4,7 @@
 
 **Goal:** Finish M5a: the continue-playing HomeScreen (default route), the sound/haptic engine with a generated default sound set, the "Back up art & themes" export, and the SGDB exact-match fix (GoldenEye: Source bug).
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.9.0-m5a3a, 83 tests). JAVA_HOME export as always. Co-Authored-By trailer. Spec §3.3 (Home), §3.5 (sound), §2.4 (backup).
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.9.0-m5a3a, 83 tests). JAVA_HOME export as always. Co-Authored-By trailer. Spec §3.3 (Home), §3.5 (sound), §2.4 (backup).
 
 ---
 

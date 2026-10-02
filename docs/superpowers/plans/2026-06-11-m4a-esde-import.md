@@ -8,7 +8,7 @@
 
 **ES-DE layout (reference):** `downloaded_media/<system shortname>/<mediatype>/<game filename minus extension>.<png|jpg>`; mediatypes include `covers`, `screenshots`, `marquees`, `videos` (`.mp4`). Game media filenames equal the ROM filename minus extension — which is exactly Mimir's `Game.title`.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.5.0-m2c, 59 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` for every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.5.0-m2c, 59 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` for every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
 
 ---
 

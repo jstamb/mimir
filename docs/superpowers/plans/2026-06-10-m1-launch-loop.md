@@ -8,7 +8,7 @@
 
 **Tech Stack (verified current June 2026):** AGP 9.2.0 (built-in Kotlin — do NOT apply `org.jetbrains.kotlin.android`), Kotlin 2.4.0, Gradle 9.5.x wrapper, Compose BOM 2026.05.00, kotlinx-serialization-json, androidx.documentfile. JDK 17 required. minSdk 29, compileSdk 36.
 
-**Conventions:** Package root `dev.mimir`. All commands run from repo root `~/Local Sites/mimir`. Commit messages end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+**Conventions:** Package root `dev.mimir`. All commands run from repo root `~/Development/mimir`. Commit messages end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
 
 ---
 
@@ -142,7 +142,7 @@ plugins {
 
 - [ ] **Step 6: Generate the Gradle wrapper**
 
-Run: `cd "/Users/cosmodrome/Local Sites/mimir" && gradle wrapper --gradle-version 9.5.1`
+Run: `cd "~/Development/mimir" && gradle wrapper --gradle-version 9.5.1`
 Expected: `gradlew`, `gradlew.bat`, `gradle/wrapper/` created.
 
 - [ ] **Step 7: Create minimal module stubs so settings resolves, then verify**

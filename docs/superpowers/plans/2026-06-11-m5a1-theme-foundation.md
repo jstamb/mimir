@@ -6,7 +6,7 @@
 
 **Architecture:** Per spec §3 (docs/superpowers/specs/2026-06-11-m5-theme-system-design.md). `:core:theme` is an Android library (Compose-enabled) whose logic (slot merge, pack application, swatch choice, LRU) is pure and unit-tested; only the DataStore/Palette wrappers touch Android. Art priority (folder > esde > sgdb > libretro) is enforced at write time by a pure `ArtPriority` rule in `:core:data`. No new screens in this wave — M5a-3 builds them on these tokens.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.6.0-m4a, 63 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Known KSP quirk: first :core:data test run after a schema bump may fail on the missing new schema JSON — rerun once.
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.6.0-m4a, 63 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Known KSP quirk: first :core:data test run after a schema bump may fail on the missing new schema JSON — rerun once.
 
 ---
 

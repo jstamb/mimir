@@ -8,7 +8,7 @@
 
 **Tech Stack:** Room 2.8.4 via KSP. **CRITICAL TOOLCHAIN NOTE:** KSP has no Kotlin 2.4.x release yet (google/ksp issue #2965, open as of 2026-06-04; latest KSP = 2.3.9 for Kotlin 2.3.x). Task 1 therefore downgrades the project to Kotlin 2.3.x — verified low-risk, nothing uses 2.4 features; AGP 9.2 requires only KGP ≥ 2.2.10. Robolectric for the DAO round-trip test.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master`. Every `./gradlew` needs `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+**Conventions:** Repo `~/Development/mimir`, branch from `master`. Every `./gradlew` needs `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
 
 ---
 

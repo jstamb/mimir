@@ -8,7 +8,7 @@
 
 **Tech Stack:** Existing stack + `androidx.room:room-testing` (MigrationTestHelper under Robolectric). No new UI libraries — ModalBottomSheet and DropdownMenu are in material3.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master`. `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` before every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Current totals: 41 tests (scanner 18, scraper 10, data 8, launcher 4, app 1).
+**Conventions:** Repo `~/Development/mimir`, branch from `master`. `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` before every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`. Current totals: 41 tests (scanner 18, scraper 10, data 8, launcher 4, app 1).
 
 ---
 

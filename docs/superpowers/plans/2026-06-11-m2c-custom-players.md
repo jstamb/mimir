@@ -6,7 +6,7 @@
 
 **Architecture:** Custom players persist in Room v4 (`custom_players` table, tested 3→4 migration) and are merged with the bundled registry by a pure, tested `mergePlayers` function in `:core:launcher` (order: bundled real emulators → custom → fake-emulator LAST, preserving the installed-order semantics). The app's player list becomes reactive (a flow), so custom players appear instantly in Settings rows, the Play-with sheet, and resolution. UI: an "Add custom emulator" flow in the Emulators screen — pick from launchable installed apps, multi-select platforms, save; custom entries get a delete affordance.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.4.0-m2b, 54 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` before every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.4.0-m2b, 54 tests). `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` before every `./gradlew`. Commits end with `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
 
 ---
 

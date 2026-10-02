@@ -8,7 +8,7 @@
 
 **SGDB API (docs: steamgriddb.com/api/v2):** Bearer auth. `GET /api/v2/search/autocomplete/{term}` → `{success, data:[{id, name}]}`. `GET /api/v2/grids/game/{id}?dimensions=600x900` (portrait boxart-like), `/heroes/game/{id}`, `/logos/game/{id}` → `{success, data:[{id, url, ...}]}`. Implementer: verify these shapes against the live docs page before coding; report drift.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `master` (v0.7.0-m5a1, 73 tests). JAVA_HOME export as always. Co-Authored-By trailer.
+**Conventions:** Repo `~/Development/mimir`, branch from `master` (v0.7.0-m5a1, 73 tests). JAVA_HOME export as always. Co-Authored-By trailer.
 
 ---
 
@@ -284,7 +284,7 @@ Folder-art on rescan — in `rescan()`'s try block the scan currently does `matc
 
 - [ ] **Step 1: E2E** (Pixel_10_Pro emulator; find serial; leave running):
   1. **Folder art:** push a distinguishable PNG (solid GREEN this time, generate like M4a) to `/sdcard/Roms/n64/GoldenEye.png` (sibling convention). Rescan in-app → GoldenEye's card turns green (screencap + READ it; DB row kind=boxart source=folder). Then tap "Fetch artwork" → still green (folder > libretro). 
-  2. **SGDB:** read the key from `grep steamgriddb ~/Local\ Sites/mimir/local.properties` (NEVER echo it into logs/doc — redact in evidence), Settings → Art sources → focus key field → `adb shell input text <key>` → Save → "Fetch heroes & logos" → expect message "SteamGridDB: saved N art items" with N>0; DB has hero/logo rows source=sgdb for at least Mario Kart 64. (Network is live; if SGDB is unreachable or the key is rejected, capture the HTTP status via logcat, report BLOCKED-EXTERNAL with evidence rather than faking it.)
+  2. **SGDB:** read the key from `grep steamgriddb ~/Development/mimir/local.properties` (NEVER echo it into logs/doc — redact in evidence), Settings → Art sources → focus key field → `adb shell input text <key>` → Save → "Fetch heroes & logos" → expect message "SteamGridDB: saved N art items" with N>0; DB has hero/logo rows source=sgdb for at least Mario Kart 64. (Network is live; if SGDB is unreachable or the key is rejected, capture the HTTP status via logcat, report BLOCKED-EXTERNAL with evidence rather than faking it.)
   3. Restart → everything persists; logcat clean.
   Evidence → `docs/superpowers/plans/m5a2-verification.md` (key REDACTED) + `img/m5a2-folderart.png`. Commit.
 - [ ] **Step 2:** README status: `**Status: M5a-2 — full art pipeline.** Local folder art auto-pickup (drop a PNG next to your ROM), SteamGridDB heroes/logos/grids with your own free API key, ES-DE import, libretro-thumbnails — sources layered by priority (yours > ES-DE > SGDB > libretro). Next: the new shell (M5a-3).` versionCode 8 / `0.8.0-m5a2`. Final --rerun-tasks 80. Commit.

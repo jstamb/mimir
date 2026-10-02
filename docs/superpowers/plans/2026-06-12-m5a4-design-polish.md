@@ -18,7 +18,7 @@ Box(fillMaxSize)
 
 **Design latitude:** this is a polish milestone — exact dp/alpha/duration values in this plan are starting points; the implementer may tune within taste (report tunings). Structure, layering, and API choices are binding.
 
-**Conventions:** Repo `~/Local Sites/mimir`, branch from `main` (v1.0.0-beta1, 84 tests, PUBLIC repo — pushes go to github.com/jstamb/mimir). JAVA_HOME export. Co-Authored-By trailer.
+**Conventions:** Repo `~/Development/mimir`, branch from `main` (v1.0.0-beta1, 84 tests, PUBLIC repo — pushes go to github.com/jstamb/mimir). JAVA_HOME export. Co-Authored-By trailer.
 
 ---
 
